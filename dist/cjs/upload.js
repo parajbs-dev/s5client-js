@@ -22,6 +22,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadDirectoryRequest = exports.uploadDirectory = exports.uploadLargeFileRequest = exports.uploadLargeFile = exports.uploadSmallFileRequest = exports.uploadSmallFile = exports.uploadFile = exports.DEFAULT_UPLOAD_OPTIONS = exports.TUS_CHUNK_SIZE = void 0;
 const tus_js_client_1 = require("tus-js-client");
@@ -31,6 +34,7 @@ const file_1 = require("./utils/file");
 const options_1 = require("./utils/options");
 const request_1 = require("./request");
 const constants_1 = require("./constants");
+const multibase_1 = __importDefault(require("multibase"));
 /**
  * The tus chunk size is (4MiB - encryptionOverhead) * dataPieces, set as default.
  */
@@ -178,6 +182,7 @@ async function uploadLargeFileRequest(file, customOptions) {
     const b3hash = hasher.digest();
     const hash = buffer_1.Buffer.concat([buffer_1.Buffer.alloc(1, constants_1.mhashBlake3Default), buffer_1.Buffer.from(b3hash)]);
     const cid = buffer_1.Buffer.concat([buffer_1.Buffer.alloc(1, constants_1.cidTypeRaw), hash, numberToBuffer(file.size)]);
+    const zCid = buffer_1.Buffer.from(multibase_1.default.encode('base58btc', cid)).toString('utf8');
     /**
      * convert a number to Buffer.
      *
@@ -223,8 +228,7 @@ async function uploadLargeFileRequest(file, customOptions) {
                     reject(new Error("'upload.url' was not set"));
                     return;
                 }
-                const resCid = "u" + cid.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace("=", "");
-                const resolveData = { data: { cid: resCid } };
+                const resolveData = { data: { cid: zCid } };
                 resolve(resolveData);
             },
         };

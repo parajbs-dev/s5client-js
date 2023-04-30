@@ -5,6 +5,7 @@ import { getFileMimeType } from "./utils/file";
 import { DEFAULT_BASE_OPTIONS } from "./utils/options";
 import { buildRequestHeaders, buildRequestUrl } from "./request";
 import { mhashBlake3Default, cidTypeRaw } from "./constants";
+import multibase from 'multibase';
 /**
  * The tus chunk size is (4MiB - encryptionOverhead) * dataPieces, set as default.
  */
@@ -148,6 +149,7 @@ export async function uploadLargeFileRequest(file, customOptions) {
     const b3hash = hasher.digest();
     const hash = Buffer.concat([Buffer.alloc(1, mhashBlake3Default), Buffer.from(b3hash)]);
     const cid = Buffer.concat([Buffer.alloc(1, cidTypeRaw), hash, numberToBuffer(file.size)]);
+    const zCid = Buffer.from(multibase.encode('base58btc', cid)).toString('utf8');
     /**
      * convert a number to Buffer.
      *
@@ -193,8 +195,7 @@ export async function uploadLargeFileRequest(file, customOptions) {
                     reject(new Error("'upload.url' was not set"));
                     return;
                 }
-                const resCid = "u" + cid.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace("=", "");
-                const resolveData = { data: { cid: resCid } };
+                const resolveData = { data: { cid: zCid } };
                 resolve(resolveData);
             },
         };
