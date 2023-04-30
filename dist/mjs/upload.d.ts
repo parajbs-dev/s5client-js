@@ -59,6 +59,7 @@ export declare const DEFAULT_UPLOAD_OPTIONS: {
     retryDelays: number[];
     APIKey: string;
     s5ApiKey: string;
+    authToken: string;
     customUserAgent: string;
     customCookie: string;
     onDownloadProgress: undefined;

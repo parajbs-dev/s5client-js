@@ -152,7 +152,8 @@ exports.uploadLargeFile = uploadLargeFile;
 async function uploadLargeFileRequest(file, customOptions) {
     const opts = { ...exports.DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     // Validation.
-    const url = await (0, request_1.buildRequestUrl)(this, { endpointPath: opts.endpointLargeUpload });
+    const urlReq = await (0, request_1.buildRequestUrl)(this, { endpointPath: opts.endpointLargeUpload });
+    const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ''}`;
     const headers = (0, request_1.buildRequestHeaders)(undefined, opts.customUserAgent, opts.customCookie, opts.s5ApiKey);
     file = ensureFileObjectConsistency(file);
     let filename = file.name;

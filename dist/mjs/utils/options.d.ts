@@ -9,6 +9,7 @@ export type BaseCustomOptions = CustomClientOptions;
 export declare const DEFAULT_BASE_OPTIONS: {
     APIKey: string;
     s5ApiKey: string;
+    authToken: string;
     customUserAgent: string;
     customCookie: string;
     onDownloadProgress: undefined;

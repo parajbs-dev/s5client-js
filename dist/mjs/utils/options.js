@@ -5,6 +5,7 @@
 export const DEFAULT_BASE_OPTIONS = {
     APIKey: "",
     s5ApiKey: "",
+    authToken: "",
     customUserAgent: "",
     customCookie: "",
     onDownloadProgress: undefined,

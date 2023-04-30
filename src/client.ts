@@ -21,6 +21,7 @@ import { buildRequestHeaders, buildRequestUrl, ExecuteRequestError, Headers } fr
  *
  * @property [APIKey] - Authentication password to use for a single S5 node.
  * @property [s5ApiKey] - Authentication API key to use for a S5 portal (sets the "S5-Api-Key" header).
+ * @property [authToken] - Account Authentication token to use for a S5 portal (sets the "S5-Api-Key" header).
  * @property [customUserAgent] - Custom user agent header to set.
  * @property [customCookie] - Custom cookie header to set. WARNING: the Cookie header cannot be set in browsers. This is meant for usage in server contexts.
  * @property [onDownloadProgress] - Optional callback to track download progress.
@@ -30,6 +31,7 @@ import { buildRequestHeaders, buildRequestUrl, ExecuteRequestError, Headers } fr
 export type CustomClientOptions = {
   APIKey?: string;
   s5ApiKey?: string;
+  authToken?: string;
   customUserAgent?: string;
   customCookie?: string;
   onDownloadProgress?: (progress: number, event: ProgressEvent) => void;
@@ -189,13 +191,15 @@ export class S5Client {
    * @throws - Will throw `ExecuteRequestError` if the request fails. This error contains the original Axios error.
    */
   async executeRequest(config: RequestConfig): Promise<AxiosResponse> {
-    const url = await buildRequestUrl(this, {
+    const urlReq = await buildRequestUrl(this, {
       baseUrl: config.url,
       endpointPath: config.endpointPath,
       subdomain: config.subdomain,
       extraPath: config.extraPath,
       query: config.query,
     });
+
+    const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
 
     // Build headers.
     const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);

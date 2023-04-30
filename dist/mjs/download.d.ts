@@ -41,6 +41,7 @@ export declare const DEFAULT_DOWNLOAD_OPTIONS: {
     subdomain: boolean;
     APIKey: string;
     s5ApiKey: string;
+    authToken: string;
     customUserAgent: string;
     customCookie: string;
     onDownloadProgress: undefined;

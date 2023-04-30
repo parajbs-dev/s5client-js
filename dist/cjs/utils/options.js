@@ -8,6 +8,7 @@ exports.DEFAULT_BASE_OPTIONS = void 0;
 exports.DEFAULT_BASE_OPTIONS = {
     APIKey: "",
     s5ApiKey: "",
+    authToken: "",
     customUserAgent: "",
     customCookie: "",
     onDownloadProgress: undefined,

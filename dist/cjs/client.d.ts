@@ -7,6 +7,7 @@ import { Headers } from "./request";
  *
  * @property [APIKey] - Authentication password to use for a single S5 node.
  * @property [s5ApiKey] - Authentication API key to use for a S5 portal (sets the "S5-Api-Key" header).
+ * @property [authToken] - Account Authentication token to use for a S5 portal (sets the "S5-Api-Key" header).
  * @property [customUserAgent] - Custom user agent header to set.
  * @property [customCookie] - Custom cookie header to set. WARNING: the Cookie header cannot be set in browsers. This is meant for usage in server contexts.
  * @property [onDownloadProgress] - Optional callback to track download progress.
@@ -16,6 +17,7 @@ import { Headers } from "./request";
 export type CustomClientOptions = {
     APIKey?: string;
     s5ApiKey?: string;
+    authToken?: string;
     customUserAgent?: string;
     customCookie?: string;
     onDownloadProgress?: (progress: number, event: ProgressEvent) => void;

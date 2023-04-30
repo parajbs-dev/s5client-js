@@ -100,13 +100,14 @@ export class S5Client {
      * @throws - Will throw `ExecuteRequestError` if the request fails. This error contains the original Axios error.
      */
     async executeRequest(config) {
-        const url = await buildRequestUrl(this, {
+        const urlReq = await buildRequestUrl(this, {
             baseUrl: config.url,
             endpointPath: config.endpointPath,
             subdomain: config.subdomain,
             extraPath: config.extraPath,
             query: config.query,
         });
+        const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
         // Build headers.
         const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
         const auth = config.APIKey ? { username: "", password: config.APIKey } : undefined;
