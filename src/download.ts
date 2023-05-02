@@ -72,7 +72,7 @@ export async function downloadFile(
   const url = await this.getCidUrl(cid, opts);
 
   // Download the url.
-  window.location.assign(url);
+  window.location.assign(url + (opts.authToken ? `?auth_token=${opts.authToken}`: ''));
 
   return url;
 }
