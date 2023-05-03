@@ -26,6 +26,7 @@ export async function downloadFile(cid, customOptions) {
     const opts = { ...DEFAULT_DOWNLOAD_OPTIONS, ...this.customOptions, ...customOptions, download: true };
     const url = await this.getCidUrl(cid, opts);
     // Download the url.
+    // window.location.assign(url + (opts.authToken ? `?auth_token=${opts.authToken}`: ''));
     window.location.assign(url);
     return url;
 }
@@ -43,7 +44,7 @@ export async function getCidUrl(cid, customOptions) {
     const opts = { ...DEFAULT_DOWNLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     console.log(opts);
     const portalUrl = await this.portalUrl();
-    const resolveUrl = portalUrl + "/" + cid;
+    const resolveUrl = portalUrl + "/" + cid + (opts.authToken ? `?auth_token=${opts.authToken}` : '');
     return resolveUrl;
 }
 /**

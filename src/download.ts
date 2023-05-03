@@ -72,7 +72,8 @@ export async function downloadFile(
   const url = await this.getCidUrl(cid, opts);
 
   // Download the url.
-  window.location.assign(url + (opts.authToken ? `?auth_token=${opts.authToken}`: ''));
+  // window.location.assign(url + (opts.authToken ? `?auth_token=${opts.authToken}`: ''));
+  window.location.assign(url);
 
   return url;
 }
@@ -93,7 +94,7 @@ export async function getCidUrl(this: S5Client, cid: string, customOptions?: Cus
 
   const portalUrl = await this.portalUrl();
 
-  const resolveUrl = portalUrl + "/" + cid;
+  const resolveUrl = portalUrl + "/" + cid + (opts.authToken ? `?auth_token=${opts.authToken}`: '');
   return resolveUrl;
 }
 
