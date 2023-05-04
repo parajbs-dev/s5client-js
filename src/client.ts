@@ -199,7 +199,8 @@ export class S5Client {
       query: config.query,
     });
 
-    const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
+    const separator = config.query ? "&" : "?";
+    const url = `${urlReq}${config.authToken ? `${separator}auth_token=${config.authToken}` : ""}`;
 
     // Build headers.
     const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
