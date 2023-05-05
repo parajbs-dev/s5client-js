@@ -52,6 +52,7 @@ export async function buildRequestUrl(
   parts: {
     baseUrl?: string;
     endpointPath?: string;
+    endpointGetMetadata?: string;
     subdomain?: string;
     extraPath?: string;
     query?: { [key: string]: string | undefined };
@@ -71,6 +72,9 @@ export async function buildRequestUrl(
 
   if (parts.endpointPath) {
     url = makeUrl(url, parts.endpointPath);
+  }
+  if (parts.endpointGetMetadata) {
+    url = makeUrl(url, parts.endpointGetMetadata);
   }
   if (parts.extraPath) {
     url = makeUrl(url, parts.extraPath);

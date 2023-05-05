@@ -56,6 +56,7 @@ export type CustomClientOptions = {
  */
 export type RequestConfig = CustomClientOptions & {
   endpointPath?: string;
+  endpointGetMetadata?: string;
   data?: FormData | Record<string, unknown>;
   url?: string;
   method?: Method;
@@ -194,12 +195,14 @@ export class S5Client {
     const urlReq = await buildRequestUrl(this, {
       baseUrl: config.url,
       endpointPath: config.endpointPath,
+      endpointGetMetadata: config.endpointGetMetadata,
       subdomain: config.subdomain,
       extraPath: config.extraPath,
       query: config.query,
     });
 
-    const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
+    const separator = config.query ? "&" : "?";
+    const url = `${urlReq}${config.authToken ? `${separator}auth_token=${config.authToken}` : ""}`;
 
     // Build headers.
     const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
