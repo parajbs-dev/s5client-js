@@ -56,6 +56,7 @@ export type CustomClientOptions = {
  */
 export type RequestConfig = CustomClientOptions & {
   endpointPath?: string;
+  endpointGetMetadata?: string;
   data?: FormData | Record<string, unknown>;
   url?: string;
   method?: Method;
@@ -194,6 +195,7 @@ export class S5Client {
     const urlReq = await buildRequestUrl(this, {
       baseUrl: config.url,
       endpointPath: config.endpointPath,
+      endpointGetMetadata: config.endpointGetMetadata,
       subdomain: config.subdomain,
       extraPath: config.extraPath,
       query: config.query,
