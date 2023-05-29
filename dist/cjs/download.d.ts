@@ -1,53 +1,14 @@
-import { ResponseType } from "axios";
 import { S5Client } from "./client";
-import { BaseCustomOptions } from "./utils/options";
+import { CustomDownloadOptions, CustomGetMetadataOptions, GetMetadataResponse, GetStorageLocationsResponse, CustomGetStorageLocationsOptions, CustomGetDownloadUrlsOptions, GetDownloadUrlsResponse } from "./defaults";
 /**
- * Custom download options.
+ * Downloads in-memory data from a S5 cid.
  *
- * @property [endpointDownload] - The relative URL path of the portal endpoint to contact.
- * @property [download=false] - Indicates to `getCidUrl` whether the file should be downloaded (true) or opened in the browser (false). `downloadFile` and `openFile` override this value.
- * @property [path] - A path to append to the cid, e.g. `dir1/dir2/file`. A Unix-style path is expected. Each path component will be URL-encoded.
- * @property [range] - The Range request header to set for the download. Not applicable for in-borwser downloads.
- * @property [responseType] - The response type.
- * @property [subdomain=false] - Whether to return the final cid in subdomain format.
+ * @param this - S5Client
+ * @param cid - 46-character cid, or a valid cid URL. Can be followed by a path. Note that the cid will not be encoded, so if your path might contain special characters, consider using `customOptions.path`.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @returns - The data
  */
-export type CustomDownloadOptions = BaseCustomOptions & {
-    endpointDownload?: string;
-    download?: boolean;
-    path?: string;
-    range?: string;
-    responseType?: ResponseType;
-    subdomain?: boolean;
-};
-export type CustomGetMetadataOptions = BaseCustomOptions & {
-    endpointGetMetadata?: string;
-};
-/**
- * The response for a get metadata request.
- *
- * @property metadata - The metadata in JSON format.
- * @property portalUrl - The URL of the portal.
- * @property cid - 46-character cid.
- */
-export type GetMetadataResponse = {
-    metadata: Record<string, unknown>;
-};
-export declare const DEFAULT_DOWNLOAD_OPTIONS: {
-    endpointDownload: string;
-    download: boolean;
-    path: undefined;
-    range: undefined;
-    responseType: undefined;
-    subdomain: boolean;
-    APIKey: string;
-    s5ApiKey: string;
-    authToken: string;
-    customUserAgent: string;
-    customCookie: string;
-    onDownloadProgress: undefined;
-    onUploadProgress: undefined;
-    loginFn: undefined;
-};
+export declare function downloadData(this: S5Client, cid: string, customOptions?: CustomDownloadOptions): Promise<ArrayBuffer>;
 /**
  * Initiates a download of the content of the cid within the browser.
  *
@@ -59,6 +20,17 @@ export declare const DEFAULT_DOWNLOAD_OPTIONS: {
  * @throws - Will throw if the cid does not contain a cid or if the path option is not a string.
  */
 export declare function downloadFile(this: S5Client, cid: string, customOptions?: CustomDownloadOptions): Promise<string>;
+/**
+ * Initiates a downloads from the directory all contents of the cid to a zip file within the browser.
+ *
+ * @param this - S5Client
+ * @param cid - 46-character cid, or a valid cid URL.
+ * @param filename - The filename of the downloaded zip file.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @returns - The zip file from the downloaded files.
+ * @throws - Will throw if the cid does not contain a cid or if the path option is not a string.
+ */
+export declare function downloadDirectory(this: S5Client, cid: string, filename: string, customOptions?: CustomDownloadOptions): Promise<void>;
 /**
  * Constructs the full URL for the given cid.
  *
@@ -81,4 +53,22 @@ export declare function getCidUrl(this: S5Client, cid: string, customOptions?: C
  * @throws - Will throw if the cid does not contain a cid .
  */
 export declare function getMetadata(this: S5Client, cid: string, customOptions?: CustomGetMetadataOptions): Promise<GetMetadataResponse>;
+/**
+ * Retrieves storage locations for a given CID.
+ *
+ * @param this - S5Client
+ * @param cid - The CID value for which storage locations are to be retrieved.
+ * @param customOptions - Custom options to be passed for the request (optional).
+ * @returns A Promise that resolves to the response data containing storage locations.
+ */
+export declare function getStorageLocations(this: S5Client, cid: string, customOptions?: CustomGetStorageLocationsOptions): Promise<GetStorageLocationsResponse>;
+/**
+ * Retrieves the download URLs for a given CID (Content Identifier).
+ *
+ * @param this - S5Client
+ * @param cid - The CID (Content Identifier) for which to retrieve the download URLs.
+ * @param customOptions - Optional custom options for the request.
+ * @returns A promise that resolves to the response containing the download URLs.
+ */
+export declare function getDownloadUrls(this: S5Client, cid: string, customOptions?: CustomGetDownloadUrlsOptions): Promise<GetDownloadUrlsResponse>;
 //# sourceMappingURL=download.d.ts.map

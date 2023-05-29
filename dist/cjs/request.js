@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExecuteRequestError = exports.buildRequestUrl = exports.buildRequestHeaders = void 0;
-const url_1 = require("./utils/url");
+const s5_utils_js_1 = require("s5-utils-js");
 /**
  * Helper function that builds the request headers.
  *
@@ -34,6 +34,12 @@ exports.buildRequestHeaders = buildRequestHeaders;
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
  * @param [parts.endpointPath] - The endpoint to contact.
+ * @param [parts.endpointUploadFromUrl] - The endpoint to Upload from Url.
+ * @param [parts.endpointGetMetadata] - The endpoint to metadata.
+ * @param [parts.endpointGetStorageLocations] - The endpoint to StorageLocations.
+ * @param [parts.endpointGetDownloadUrls] - The endpoint to get DownloadUrls.
+ * @param [parts.endpointDelete] - The endpoint to delete.
+ * @param [parts.endpointPin] - The endpoint to pin.
  * @param [parts.subdomain] - An optional subdomain to add to the URL.
  * @param [parts.extraPath] - An optional path to append to the URL.
  * @param [parts.query] - Optional query parameters to append to the URL.
@@ -49,18 +55,36 @@ async function buildRequestUrl(client, parts) {
         url = parts.baseUrl;
     }
     // Make sure the URL has a protocol.
-    url = (0, url_1.ensureUrlPrefix)(url);
+    url = (0, s5_utils_js_1.ensureUrlPrefix)(url);
     if (parts.endpointPath) {
-        url = (0, url_1.makeUrl)(url, parts.endpointPath);
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointPath);
+    }
+    if (parts.endpointUploadFromUrl) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointUploadFromUrl);
+    }
+    if (parts.endpointGetMetadata) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointGetMetadata);
+    }
+    if (parts.endpointGetStorageLocations) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointGetStorageLocations);
+    }
+    if (parts.endpointGetDownloadUrls) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointGetDownloadUrls);
+    }
+    if (parts.endpointDelete) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointDelete);
+    }
+    if (parts.endpointPin) {
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.endpointPin);
     }
     if (parts.extraPath) {
-        url = (0, url_1.makeUrl)(url, parts.extraPath);
+        url = (0, s5_utils_js_1.makeUrl)(url, parts.extraPath);
     }
     if (parts.subdomain) {
-        url = (0, url_1.addUrlSubdomain)(url, parts.subdomain);
+        url = (0, s5_utils_js_1.addUrlSubdomain)(url, parts.subdomain);
     }
     if (parts.query) {
-        url = (0, url_1.addUrlQuery)(url, parts.query);
+        url = (0, s5_utils_js_1.addUrlQuery)(url, parts.query);
     }
     return url;
 }

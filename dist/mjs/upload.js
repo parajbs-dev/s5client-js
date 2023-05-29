@@ -1,36 +1,85 @@
 import { Upload } from "tus-js-client";
-import * as blake3 from "blake3-wasm";
-import { Buffer } from "buffer";
-import { getFileMimeType } from "./utils/file";
-import { DEFAULT_BASE_OPTIONS } from "./utils/options";
+import { PORTAL_FILE_FIELD_NAME, DEFAULT_DIRECTORY_NAME, DEFAULT_UPLOAD_OPTIONS, DEFAULT_UPLOAD_FROM_URL_OPTIONS, } from "./defaults";
 import { buildRequestHeaders, buildRequestUrl } from "./request";
-import { mhashBlake3Default, cidTypeRaw } from "./constants";
-import multibase from 'multibase';
+import { generateCIDFromMHash, encodeCIDWithPrefixZ, calculateB3hashFromFile, getFileMimeType, generateMHashFromB3hash, convertMHashToB64url, } from "s5-utils-js";
 /**
- * The tus chunk size is (4MiB - encryptionOverhead) * dataPieces, set as default.
+ * Uploads a file from a URL.
+ *
+ * @param this - The instance of the S5Client class.
+ * @param dataurl - The URL of the file to be uploaded.
+ * @param customOptions - Optional custom upload options.
+ * @returns A promise that resolves to the AxiosResponse object representing the upload response.
  */
-export const TUS_CHUNK_SIZE = (1 << 22) * 8;
+export async function uploadFromUrl(dataurl, customOptions) {
+    // Merge the default upload options, custom options from the instance, and any provided custom options
+    const opts = { ...DEFAULT_UPLOAD_FROM_URL_OPTIONS, ...this.customOptions, ...customOptions };
+    const query = { url: dataurl };
+    // Execute the request to upload from the URL
+    const response = await this.executeRequest({
+        ...opts,
+        endpointPath: opts.endpointUploadFromUrl,
+        method: "post",
+        query,
+    });
+    return response.data;
+}
 /**
- * The retry delays, in ms. Data is stored in skyd for up to 20 minutes, so the
- * total delays should not exceed that length of time.
+ * Uploads data to S5-net.
+ *
+ * @param this - S5Client
+ * @param data - The data to upload.
+ * @param filename - The name of uploaded Data file.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @returns - The returned cid.
+ * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
-const DEFAULT_TUS_RETRY_DELAYS = [0, 5000, 15000, 60000, 300000, 600000];
+export async function uploadData(data, filename, customOptions) {
+    const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
+    let sizeInBytes;
+    let arrayBuffer;
+    if (typeof data === "string") {
+        arrayBuffer = new TextEncoder().encode(data).buffer;
+        sizeInBytes = arrayBuffer.byteLength;
+    }
+    else if (ArrayBuffer.isView(data)) {
+        arrayBuffer = data.buffer;
+        sizeInBytes = data.byteLength;
+    }
+    else if (data instanceof ArrayBuffer) {
+        arrayBuffer = data;
+        sizeInBytes = arrayBuffer.byteLength;
+    }
+    else {
+        throw new Error(`Unsupported data type: ${typeof data}`);
+    }
+    const fileType = "text/plain";
+    const file = createFileFromData(data, filename, fileType);
+    if (sizeInBytes < opts.largeFileSize) {
+        return await this.uploadSmallFile(file, opts);
+    }
+    return await this.uploadLargeFile(file, opts);
+}
 /**
- * The portal file field name.
+ * Creates a File object from the provided data, file name, and file type.
+ *
+ * @param data - The data of the file, which can be a string, an ArrayBuffer, or a Uint8Array.
+ * @param fileName - The name of the file.
+ * @param fileType - The type (MIME type) of the file.
+ * @returns A File object representing the file.
  */
-const PORTAL_FILE_FIELD_NAME = "file";
-export const DEFAULT_UPLOAD_OPTIONS = {
-    ...DEFAULT_BASE_OPTIONS,
-    endpointUpload: "/s5/upload",
-    endpointDirectoryUpload: "/s5/upload/directory",
-    endpointLargeUpload: "/s5/upload/tus",
-    customFilename: "",
-    errorPages: { 404: "/404.html" },
-    tryFiles: ["index.html"],
-    // Large files.
-    largeFileSize: TUS_CHUNK_SIZE,
-    retryDelays: DEFAULT_TUS_RETRY_DELAYS,
-};
+export function createFileFromData(data, fileName, fileType) {
+    let file;
+    const blobData = [data];
+    const options = { type: fileType };
+    const blob = new Blob(blobData, options);
+    if (typeof data === "string") {
+        file = new File([blob], fileName);
+    }
+    else {
+        file = new File([blob], fileName, { type: fileType });
+    }
+    return file;
+}
 /**
  * Uploads a file to S5-net.
  *
@@ -124,7 +173,7 @@ export async function uploadLargeFileRequest(file, customOptions) {
     const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     // Validation.
     const urlReq = await buildRequestUrl(this, { endpointPath: opts.endpointLargeUpload });
-    const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ''}`;
+    const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ""}`;
     const headers = buildRequestHeaders(undefined, opts.customUserAgent, opts.customCookie, opts.s5ApiKey);
     file = ensureFileObjectConsistency(file);
     let filename = file.name;
@@ -137,44 +186,16 @@ export async function uploadLargeFileRequest(file, customOptions) {
             // @ts-expect-error TS complains.
             opts.onUploadProgress(progress, { loaded: bytesSent, total: bytesTotal });
         };
-    await blake3.load();
-    const hasher = blake3.createHash();
-    const chunkSize = 1024 * 1024;
-    let position = 0;
-    while (position <= file.size) {
-        const chunk = file.slice(position, position + chunkSize);
-        hasher.update(await chunk.arrayBuffer());
-        position += chunkSize;
-    }
-    const b3hash = hasher.digest();
-    const hash = Buffer.concat([Buffer.alloc(1, mhashBlake3Default), Buffer.from(b3hash)]);
-    const cid = Buffer.concat([Buffer.alloc(1, cidTypeRaw), hash, numberToBuffer(file.size)]);
-    const zCid = Buffer.from(multibase.encode('base58btc', cid)).toString('utf8');
-    /**
-     * convert a number to Buffer.
-     *
-     * @param value - File objects to upload, indexed by their path strings.
-     * @returns - The returned cid.
-     * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
-     */
-    function numberToBuffer(value) {
-        const view = Buffer.alloc(16);
-        let lastIndex = 15;
-        for (let index = 0; index <= 15; ++index) {
-            if (value % 256 !== 0) {
-                lastIndex = index;
-            }
-            view[index] = value % 256;
-            value = value >> 8;
-        }
-        return view.subarray(0, lastIndex + 1);
-    }
+    const b3hash = await calculateB3hashFromFile(file);
+    const mhash = generateMHashFromB3hash(b3hash);
+    const cid = generateCIDFromMHash(mhash, file);
+    const mHashBase64url = convertMHashToB64url(mhash);
+    const zCid = encodeCIDWithPrefixZ(cid);
     return new Promise((resolve, reject) => {
         const tusOpts = {
             endpoint: url,
-            //      retryDelays: opts.retryDelays,
             metadata: {
-                hash: hash.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace("=", ""),
+                hash: mHashBase64url,
                 filename,
                 filetype: file.type,
             },
@@ -208,14 +229,13 @@ export async function uploadLargeFileRequest(file, customOptions) {
  *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
- * @param filename - The name of the directory.
  * @param [customOptions] - Additional settings that can optionally be set.
  * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
-export async function uploadDirectory(directory, filename, customOptions) {
-    const response = await this.uploadDirectoryRequest(directory, filename, customOptions);
+export async function uploadDirectory(directory, customOptions) {
+    const response = await this.uploadDirectoryRequest(directory, customOptions);
     const responsedS5Cid = { cid: response.data.cid };
     return responsedS5Cid;
 }
@@ -224,25 +244,88 @@ export async function uploadDirectory(directory, filename, customOptions) {
  *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
- * @param filename - The name of the directory.
  * @param [customOptions] - Additional settings that can optionally be set.
  * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  * @throws - Will throw if the input filename is not a string.
  */
-export async function uploadDirectoryRequest(directory, filename, customOptions) {
+export async function uploadDirectoryRequest(directory, customOptions) {
     const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     const formData = new FormData();
     Object.entries(directory).forEach(([path, file]) => {
         file = ensureFileObjectConsistency(file);
         formData.append(path, file, path);
     });
-    const query = { filename };
+    let dirname;
+    if (opts.customDirname != null) {
+        dirname = DEFAULT_DIRECTORY_NAME;
+    }
+    const dirName = opts.customDirname || dirname;
+    const query = { name: dirName };
     if (opts.tryFiles) {
         query.tryfiles = JSON.stringify(opts.tryFiles);
     }
     if (opts.errorPages) {
         query.errorpages = JSON.stringify(opts.errorPages);
+    }
+    const response = await this.executeRequest({
+        ...opts,
+        endpointPath: opts.endpointDirectoryUpload,
+        method: "post",
+        data: formData,
+        query,
+    });
+    return response;
+}
+/**
+ * Uploads a directory to S5-net.
+ *
+ * @param this - S5Client
+ * @param directory - File objects to upload, indexed by their path strings.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @returns - The returned cid.
+ * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
+ */
+export async function uploadWebapp(directory, customOptions) {
+    const response = await this.uploadWebappRequest(directory, customOptions);
+    const responsedS5Cid = { cid: response.data.cid };
+    return responsedS5Cid;
+}
+/**
+ * Makes a request to upload a directory to S5-net.
+ *
+ * @param this - S5Client
+ * @param directory - File objects to upload, indexed by their path strings.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @returns - The upload response.
+ * @throws - Will throw if the input filename is not a string.
+ */
+export async function uploadWebappRequest(directory, customOptions) {
+    const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
+    const formData = new FormData();
+    Object.entries(directory).forEach(([path, file]) => {
+        file = ensureFileObjectConsistency(file);
+        formData.append(path, file, path);
+    });
+    let dirname;
+    if (opts.customDirname != null) {
+        dirname = DEFAULT_DIRECTORY_NAME;
+    }
+    const dirName = opts.customDirname || dirname;
+    const query = { name: dirName };
+    if (opts.tryFiles) {
+        query.tryfiles = JSON.stringify(opts.tryFiles);
+    }
+    else {
+        query.tryfiles = JSON.stringify(["index.html"]);
+    }
+    if (opts.errorPages) {
+        query.errorpages = JSON.stringify(opts.errorPages);
+    }
+    else {
+        query.errorpages = JSON.stringify({ 404: "/404.html" });
     }
     const response = await this.executeRequest({
         ...opts,

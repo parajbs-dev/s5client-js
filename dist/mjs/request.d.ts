@@ -21,6 +21,12 @@ export declare function buildRequestHeaders(baseHeaders?: Headers, customUserAge
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
  * @param [parts.endpointPath] - The endpoint to contact.
+ * @param [parts.endpointUploadFromUrl] - The endpoint to Upload from Url.
+ * @param [parts.endpointGetMetadata] - The endpoint to metadata.
+ * @param [parts.endpointGetStorageLocations] - The endpoint to StorageLocations.
+ * @param [parts.endpointGetDownloadUrls] - The endpoint to get DownloadUrls.
+ * @param [parts.endpointDelete] - The endpoint to delete.
+ * @param [parts.endpointPin] - The endpoint to pin.
  * @param [parts.subdomain] - An optional subdomain to add to the URL.
  * @param [parts.extraPath] - An optional path to append to the URL.
  * @param [parts.query] - Optional query parameters to append to the URL.
@@ -29,6 +35,12 @@ export declare function buildRequestHeaders(baseHeaders?: Headers, customUserAge
 export declare function buildRequestUrl(client: S5Client, parts: {
     baseUrl?: string;
     endpointPath?: string;
+    endpointUploadFromUrl?: string;
+    endpointGetMetadata?: string;
+    endpointGetStorageLocations?: string;
+    endpointGetDownloadUrls?: string;
+    endpointDelete?: string;
+    endpointPin?: string;
     subdomain?: string;
     extraPath?: string;
     query?: {

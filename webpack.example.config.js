@@ -19,7 +19,12 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-    fallback: { "crypto": false },
+    fallback: {
+      crypto: require.resolve("crypto-browserify"),
+      stream: require.resolve("stream-browserify"),
+      path: require.resolve("path-browserify"),
+      fs: false
+    },
   },
   output: {
     path: path.resolve(__dirname, "./example/dist"),

@@ -1,73 +1,46 @@
 import axios, { AxiosError } from "axios";
-import type { AxiosResponse, ResponseType, Method } from "axios";
+import type { AxiosResponse } from "axios";
+
+import { CustomClientOptions, RequestConfig } from "./defaults";
+import { buildRequestHeaders, buildRequestUrl, ExecuteRequestError } from "./request";
 
 import {
+  getAllInfosFromCid,
+  convertDownloadDirectoryInputCid,
+  convertB58btcToB32rfcCid,
+  convertS5CidToMHashB64url,
+  convertS5CidToB3hashHex,
+  defaultPortalUrl,
+  addUrlSubdomain,
+  ensureUrl,
+} from "s5-utils-js";
+
+import { deleteCid } from "./delete";
+import { pinCid } from "./pin";
+
+import {
+  downloadData,
+  downloadFile,
+  downloadDirectory,
+  getCidUrl,
+  getMetadata,
+  getStorageLocations,
+  getDownloadUrls,
+} from "./download";
+
+import {
+  uploadFromUrl,
+  uploadData,
   uploadFile,
   uploadLargeFile,
   uploadDirectory,
   uploadDirectoryRequest,
+  uploadWebapp,
+  uploadWebappRequest,
   uploadSmallFile,
   uploadSmallFileRequest,
   uploadLargeFileRequest,
 } from "./upload";
-import { downloadFile, getCidUrl, getMetadata } from "./download";
-
-import { defaultPortalUrl, ensureUrl } from "./utils/url";
-
-import { buildRequestHeaders, buildRequestUrl, ExecuteRequestError, Headers } from "./request";
-
-/**
- * Custom client options.
- *
- * @property [APIKey] - Authentication password to use for a single S5 node.
- * @property [s5ApiKey] - Authentication API key to use for a S5 portal (sets the "S5-Api-Key" header).
- * @property [authToken] - Account Authentication token to use for a S5 portal (sets the "S5-Api-Key" header).
- * @property [customUserAgent] - Custom user agent header to set.
- * @property [customCookie] - Custom cookie header to set. WARNING: the Cookie header cannot be set in browsers. This is meant for usage in server contexts.
- * @property [onDownloadProgress] - Optional callback to track download progress.
- * @property [onUploadProgress] - Optional callback to track upload progress.
- * @property [loginFn] - A function that, if set, is called when a 401 is returned from the request before re-trying the request.
- */
-export type CustomClientOptions = {
-  APIKey?: string;
-  s5ApiKey?: string;
-  authToken?: string;
-  customUserAgent?: string;
-  customCookie?: string;
-  onDownloadProgress?: (progress: number, event: ProgressEvent) => void;
-  onUploadProgress?: (progress: number, event: ProgressEvent) => void;
-  loginFn?: (config?: RequestConfig) => Promise<void>;
-};
-
-/**
- * Config options for a single request.
- *
- * @property endpointPath - The endpoint to contact.
- * @property [data] - The data for a POST request.
- * @property [url] - The full url to contact. Will be computed from the portalUrl and endpointPath if not provided.
- * @property [method] - The request method.
- * @property [headers] - Any request headers to set.
- * @property [subdomain] - An optional subdomain to add to the URL.
- * @property [query] - Query parameters.
- * @property [extraPath] - An additional path to append to the URL, e.g. a 46-character cid.
- * @property [responseType] - The response type.
- * @property [transformRequest] - A function that allows manually transforming the request.
- * @property [transformResponse] - A function that allows manually transforming the response.
- */
-export type RequestConfig = CustomClientOptions & {
-  endpointPath?: string;
-  endpointGetMetadata?: string;
-  data?: FormData | Record<string, unknown>;
-  url?: string;
-  method?: Method;
-  headers?: Headers;
-  subdomain?: string;
-  query?: { [key: string]: string | undefined };
-  extraPath?: string;
-  responseType?: ResponseType;
-  transformRequest?: (data: unknown) => string;
-  transformResponse?: (data: string) => Record<string, unknown>;
-};
 
 // Add a response interceptor so that we always return an error of type
 // `ExecuteResponseError`.
@@ -104,7 +77,8 @@ export class S5Client {
   // Set methods (defined in other files).
 
   // Upload
-
+  uploadFromUrl = uploadFromUrl;
+  uploadData = uploadData;
   uploadFile = uploadFile;
   protected uploadSmallFile = uploadSmallFile;
   protected uploadSmallFileRequest = uploadSmallFileRequest;
@@ -112,12 +86,33 @@ export class S5Client {
   protected uploadLargeFileRequest = uploadLargeFileRequest;
   uploadDirectory = uploadDirectory;
   protected uploadDirectoryRequest = uploadDirectoryRequest;
+  uploadWebapp = uploadWebapp;
+  protected uploadWebappRequest = uploadWebappRequest;
+
+  // Delete
+  deleteCid = deleteCid;
+
+  // Pin
+  pinCid = pinCid;
 
   // Download
-
+  downloadData = downloadData;
   downloadFile = downloadFile;
+  downloadDirectory = downloadDirectory;
   getCidUrl = getCidUrl;
   getMetadata = getMetadata;
+  getStorageLocations = getStorageLocations;
+  getDownloadUrls = getDownloadUrls;
+
+  // Tools
+  tools = {
+    convertB58btcToB32rfcCid: convertB58btcToB32rfcCid.bind(this),
+    addUrlSubdomain: addUrlSubdomain.bind(this),
+    convertS5CidToMHashB64url: convertS5CidToMHashB64url.bind(this),
+    convertDownloadDirectoryInputCid: convertDownloadDirectoryInputCid.bind(this),
+    getAllInfosFromCid: getAllInfosFromCid.bind(this),
+    convertS5CidToB3hashHex: convertS5CidToB3hashHex.bind(this),
+  };
 
   /**
    * The S5 Client which can be used to access S5-net.
@@ -196,6 +191,10 @@ export class S5Client {
       baseUrl: config.url,
       endpointPath: config.endpointPath,
       endpointGetMetadata: config.endpointGetMetadata,
+      endpointGetStorageLocations: config.endpointGetStorageLocations,
+      endpointGetDownloadUrls: config.endpointGetDownloadUrls,
+      endpointDelete: config.endpointDelete,
+      endpointPin: config.endpointPin,
       subdomain: config.subdomain,
       extraPath: config.extraPath,
       query: config.query,
@@ -259,7 +258,6 @@ export class S5Client {
         // to login again, avoiding infinite loops.
         return await this.executeRequest({ ...config, loginFn: undefined });
       }
-
       throw e;
     }
   }

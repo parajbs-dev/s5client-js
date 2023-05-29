@@ -1,8 +1,10 @@
 import axios from "axios";
-import { uploadFile, uploadLargeFile, uploadDirectory, uploadDirectoryRequest, uploadSmallFile, uploadSmallFileRequest, uploadLargeFileRequest, } from "./upload";
-import { downloadFile, getCidUrl, getMetadata } from "./download";
-import { defaultPortalUrl, ensureUrl } from "./utils/url";
 import { buildRequestHeaders, buildRequestUrl, ExecuteRequestError } from "./request";
+import { getAllInfosFromCid, convertDownloadDirectoryInputCid, convertB58btcToB32rfcCid, convertS5CidToMHashB64url, convertS5CidToB3hashHex, defaultPortalUrl, addUrlSubdomain, ensureUrl, } from "s5-utils-js";
+import { deleteCid } from "./delete";
+import { pinCid } from "./pin";
+import { downloadData, downloadFile, downloadDirectory, getCidUrl, getMetadata, getStorageLocations, getDownloadUrls, } from "./download";
+import { uploadFromUrl, uploadData, uploadFile, uploadLargeFile, uploadDirectory, uploadDirectoryRequest, uploadWebapp, uploadWebappRequest, uploadSmallFile, uploadSmallFileRequest, uploadLargeFileRequest, } from "./upload";
 // Add a response interceptor so that we always return an error of type
 // `ExecuteResponseError`.
 axios.interceptors.response.use(function (response) {
@@ -28,6 +30,8 @@ export class S5Client {
     constructor(initialPortalUrl = "", customOptions = {}) {
         // Set methods (defined in other files).
         // Upload
+        this.uploadFromUrl = uploadFromUrl;
+        this.uploadData = uploadData;
         this.uploadFile = uploadFile;
         this.uploadSmallFile = uploadSmallFile;
         this.uploadSmallFileRequest = uploadSmallFileRequest;
@@ -35,10 +39,29 @@ export class S5Client {
         this.uploadLargeFileRequest = uploadLargeFileRequest;
         this.uploadDirectory = uploadDirectory;
         this.uploadDirectoryRequest = uploadDirectoryRequest;
+        this.uploadWebapp = uploadWebapp;
+        this.uploadWebappRequest = uploadWebappRequest;
+        // Delete
+        this.deleteCid = deleteCid;
+        // Pin
+        this.pinCid = pinCid;
         // Download
+        this.downloadData = downloadData;
         this.downloadFile = downloadFile;
+        this.downloadDirectory = downloadDirectory;
         this.getCidUrl = getCidUrl;
         this.getMetadata = getMetadata;
+        this.getStorageLocations = getStorageLocations;
+        this.getDownloadUrls = getDownloadUrls;
+        // Tools
+        this.tools = {
+            convertB58btcToB32rfcCid: convertB58btcToB32rfcCid.bind(this),
+            addUrlSubdomain: addUrlSubdomain.bind(this),
+            convertS5CidToMHashB64url: convertS5CidToMHashB64url.bind(this),
+            convertDownloadDirectoryInputCid: convertDownloadDirectoryInputCid.bind(this),
+            getAllInfosFromCid: getAllInfosFromCid.bind(this),
+            convertS5CidToB3hashHex: convertS5CidToB3hashHex.bind(this),
+        };
         if (initialPortalUrl === "") {
             // Portal was not given, use the default portal URL. We'll still make a request for the resolved portal URL.
             initialPortalUrl = defaultPortalUrl();
@@ -103,11 +126,17 @@ export class S5Client {
         const urlReq = await buildRequestUrl(this, {
             baseUrl: config.url,
             endpointPath: config.endpointPath,
+            endpointGetMetadata: config.endpointGetMetadata,
+            endpointGetStorageLocations: config.endpointGetStorageLocations,
+            endpointGetDownloadUrls: config.endpointGetDownloadUrls,
+            endpointDelete: config.endpointDelete,
+            endpointPin: config.endpointPin,
             subdomain: config.subdomain,
             extraPath: config.extraPath,
             query: config.query,
         });
-        const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
+        const separator = config.query ? "&" : "?";
+        const url = `${urlReq}${config.authToken ? `${separator}auth_token=${config.authToken}` : ""}`;
         // Build headers.
         const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
         const auth = config.APIKey ? { username: "", password: config.APIKey } : undefined;

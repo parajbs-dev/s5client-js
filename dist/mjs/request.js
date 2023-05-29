@@ -1,4 +1,4 @@
-import { addUrlQuery, addUrlSubdomain, ensureUrlPrefix, makeUrl } from "./utils/url";
+import { addUrlQuery, addUrlSubdomain, ensureUrlPrefix, makeUrl } from "s5-utils-js";
 /**
  * Helper function that builds the request headers.
  *
@@ -30,6 +30,12 @@ export function buildRequestHeaders(baseHeaders, customUserAgent, customCookie, 
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
  * @param [parts.endpointPath] - The endpoint to contact.
+ * @param [parts.endpointUploadFromUrl] - The endpoint to Upload from Url.
+ * @param [parts.endpointGetMetadata] - The endpoint to metadata.
+ * @param [parts.endpointGetStorageLocations] - The endpoint to StorageLocations.
+ * @param [parts.endpointGetDownloadUrls] - The endpoint to get DownloadUrls.
+ * @param [parts.endpointDelete] - The endpoint to delete.
+ * @param [parts.endpointPin] - The endpoint to pin.
  * @param [parts.subdomain] - An optional subdomain to add to the URL.
  * @param [parts.extraPath] - An optional path to append to the URL.
  * @param [parts.query] - Optional query parameters to append to the URL.
@@ -48,6 +54,24 @@ export async function buildRequestUrl(client, parts) {
     url = ensureUrlPrefix(url);
     if (parts.endpointPath) {
         url = makeUrl(url, parts.endpointPath);
+    }
+    if (parts.endpointUploadFromUrl) {
+        url = makeUrl(url, parts.endpointUploadFromUrl);
+    }
+    if (parts.endpointGetMetadata) {
+        url = makeUrl(url, parts.endpointGetMetadata);
+    }
+    if (parts.endpointGetStorageLocations) {
+        url = makeUrl(url, parts.endpointGetStorageLocations);
+    }
+    if (parts.endpointGetDownloadUrls) {
+        url = makeUrl(url, parts.endpointGetDownloadUrls);
+    }
+    if (parts.endpointDelete) {
+        url = makeUrl(url, parts.endpointDelete);
+    }
+    if (parts.endpointPin) {
+        url = makeUrl(url, parts.endpointPin);
     }
     if (parts.extraPath) {
         url = makeUrl(url, parts.extraPath);
