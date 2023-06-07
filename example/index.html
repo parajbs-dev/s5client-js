@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S5Client Example</title>
+    <script src="/dist/s5client.js"></script>
+    <script src="/config.js"></script>
+    <script>
+
+const S5Client = s5client.S5Client;
+
+const headers = {};
+const customClientOptions = { authToken: PORTAL_AUTH_TOKEN, headers, withCredentials: false };
+
+// Instantiate the S5Client
+const client = new S5Client(PORTAL_URL, customClientOptions);
+
+      let uploadedFileCID = null;
+
+      async function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          console.error('No file selected');
+          return;
+        }
+
+        try {
+          // Upload the file
+          const { cid } = await client.uploadFile(file);
+
+          // Log the CID and store it
+          console.log('Uploaded file CID:', cid);
+          uploadedFileCID = cid;
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+
+      async function handleFileDownload() {
+        if (!uploadedFileCID) {
+          console.error('No file has been uploaded yet');
+          return;
+        }
+
+        try {
+          // Download the file
+          await client.downloadFile(uploadedFileCID);
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const inputElement = document.getElementById('file-input');
+        inputElement.addEventListener('change', handleFileUpload);
+
+        const downloadButton = document.getElementById('download-button');
+        downloadButton.addEventListener('click', handleFileDownload);
+      });
+    </script>
+  </head>
+  <body>
+    <h1>S5Client Example</h1>
+    <input type="file" id="file-input" />
+    <button id="download-button">Download</button>
+  </body>
+</html>

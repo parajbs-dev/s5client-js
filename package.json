@@ -1,0 +1,112 @@
+{
+  "name": "s5client-js",
+  "version": "0.5.0-beta14",
+  "description": "S5 Javascript Client",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist/*"
+  ],
+  "browserslist": [
+    "defaults",
+    "not IE 11",
+    "not OperaMini all"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc --project tsconfig.build.json && tsc --project tsconfig.build.cjs.json",
+    "build-deploy": "rimraf bundle && mkdir bundle && browserify ./src/index.ts -s skynet -p [ tsify --noImplicitAny ] > bundle/index.js",
+    "deploy": "yarn build-deploy && node ./scripts/deploy.js && rimraf bundle",
+    "lint": "yarn lint:tsc && yarn lint:eslint",
+    "lint:eslint": "eslint . --max-warnings 0",
+    "lint:tsc": "tsc",
+    "prepublishOnly": "yarn && yarn build",
+    "test": "echo hello",
+    "webpack": "npx webpack --config ./webpack.config.js",
+    "webpack-example": "npx webpack --config ./webpack.example.config.js",
+    "start": "webpack serve --config webpack.dev.js"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,yml,md}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parajbs-dev/s5client-js.git"
+  },
+  "keywords": [
+    "Decentralised",
+    "Content-Addressed",
+    "Cloud Storage",
+    "S5"
+  ],
+  "author": "parajbs-dev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/parajbs-dev/s5client-js/issues"
+  },
+  "homepage": "https://github.com/parajbs-dev/s5client-js",
+  "dependencies": {
+    "@babel/runtime": "^7.17.8",
+    "@types/file-saver": "^2.0.5",
+    "axios": "^0.27.2",
+    "base32-encode": "^1.1.1",
+    "buffer": "^6.0.3",
+    "file-saver": "^2.0.5",
+    "hash-wasm": "^4.9.0",
+    "jszip": "^3.10.1",
+    "mime": "^3.0.0",
+    "path-browserify": "1.0.1",
+    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_7",
+    "tus-js-client": "^3.1.0",
+    "url-join": "^4.0.1",
+    "url-parse": "^1.5.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.8",
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.7",
+    "@types/base64-js": "^1.3.0",
+    "@types/mime": "^3.0.1",
+    "@types/minimist": "^1.2.2",
+    "@types/node": "^18.0.0",
+    "@types/randombytes": "^2.0.0",
+    "@types/sjcl": "^1.0.29",
+    "@types/url-join": "^4.0.0",
+    "@types/url-parse": "^1.4.3",
+    "@typescript-eslint/eslint-plugin": "^5.27.1",
+    "@typescript-eslint/parser": "^5.27.1",
+    "axios-mock-adapter": "^1.18.2",
+    "axios-retry": "^3.2.5",
+    "babel-loader": "^8.2.4",
+    "crypto-browserify": "3.12.0",
+    "eslint": "^8.17.0",
+    "eslint-plugin-jsdoc": "^39.2.8",
+    "lint-staged": "^13.0.0",
+    "prettier": "^2.1.1",
+    "rimraf": "^3.0.2",
+    "stream-browserify": "3.0.0",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.8.1",
+    "tsify": "^5.0.4",
+    "typescript": "5.0.4",
+    "webpack": "^5.81.0",
+    "webpack-cli": "^5.0.2",
+    "webpack-dev-server": "^4.13.3",
+    "webpack-merge": "^5.8.0"
+  }
+}
