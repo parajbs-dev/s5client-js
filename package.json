@@ -1,6 +1,6 @@
 {
   "name": "s5client-js",
-  "version": "0.5.0-beta12",
+  "version": "0.5.0-beta13",
   "description": "S5 Javascript Client",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -59,16 +59,16 @@
   "homepage": "https://github.com/parajbs-dev/s5client-js",
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@c4312/blake3-internal": "^3.0.0",
     "@types/file-saver": "^2.0.5",
     "axios": "^0.27.2",
     "base32-encode": "^1.1.1",
-    "blake3-wasm": "^3.0.0",
     "buffer": "^6.0.3",
+    "file-saver": "^2.0.5",
+    "hash-wasm": "^4.9.0",
     "jszip": "^3.10.1",
     "mime": "^3.0.0",
     "path-browserify": "1.0.1",
-    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_5",
+    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_6",
     "tus-js-client": "^3.1.0",
     "url-join": "^4.0.1",
     "url-parse": "^1.5.1"
@@ -96,7 +96,6 @@
     "crypto-browserify": "3.12.0",
     "eslint": "^8.17.0",
     "eslint-plugin-jsdoc": "^39.2.8",
-    "file-saver": "^2.0.5",
     "lint-staged": "^13.0.0",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
@@ -104,18 +103,10 @@
     "ts-loader": "^9.4.2",
     "ts-node": "^10.8.1",
     "tsify": "^5.0.4",
-    "typescript": "^5.0.4",
+    "typescript": "5.0.4",
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2",
     "webpack-dev-server": "^4.13.3",
     "webpack-merge": "^5.8.0"
-  },
-  "overrides": {
-    "blake3-wasm": "3.0.0",
-    "@c4312/blake3-internal": "3.0.0"
-  },
-  "resolutions": {
-    "@c4312/blake3-internal": "3.0.0",
-    "blake3-wasm": "^3.0.0"
   }
 }

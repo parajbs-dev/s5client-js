@@ -8,7 +8,7 @@ An S5 Client in Javascript for Decentralized content-addressed storage network S
 
 1. Clone this repo.
 2. cd s5client-js
-3. npm install
+3. yarn install
 
 ## Documentation
 
