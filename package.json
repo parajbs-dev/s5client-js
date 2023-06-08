@@ -68,7 +68,7 @@
     "jszip": "^3.10.1",
     "mime": "^3.0.0",
     "path-browserify": "1.0.1",
-    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js_old.git#test_7",
+    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_7",
     "tus-js-client": "^3.1.0",
     "url-join": "^4.0.1",
     "url-parse": "^1.5.1"
