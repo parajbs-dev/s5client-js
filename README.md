@@ -1,8 +1,6 @@
-This package is old, and will be further developed under > > > [parajbs-dev/s5Client-javascript](https://github.com/parajbs-dev/s5Client-javascript) < < <.
-
 ---
 
-# S5 Client Javascript SDK old
+# S5 Client Javascript SDK
 
 An S5 Client in Javascript for Decentralized content-addressed storage network S5.
 
