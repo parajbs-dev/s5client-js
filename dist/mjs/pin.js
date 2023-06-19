@@ -1,7 +1,6 @@
 import { DEFAULT_PIN_OPTIONS } from "./defaults";
 /**
  * Pins a S5 Cid using the S5Client instance.
- *
  * @param this - The instance of the S5Client object.
  * @param cid - The CID to be pinned.
  * @param [customOptions] - Additional settings that can optionally be set.

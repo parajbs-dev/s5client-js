@@ -1,11 +1,10 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { S5Client } from "./client";
 export type Headers = {
     [key: string]: string;
 };
 /**
  * Helper function that builds the request headers.
- *
  * @param [baseHeaders] - Any base headers.
  * @param [customUserAgent] - A custom user agent to set.
  * @param [customCookie] - A custom cookie.
@@ -16,7 +15,6 @@ export declare function buildRequestHeaders(baseHeaders?: Headers, customUserAge
 /**
  * Helper function that builds the request URL. Ensures that the final URL
  * always has a protocol prefix for consistency.
- *
  * @param client - The S5 client.
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
@@ -56,7 +54,7 @@ export declare class ExecuteRequestError<T = any, D = any> extends Error impleme
     originalError: AxiosError;
     responseStatus: number | null;
     responseMessage: string | null;
-    config: AxiosRequestConfig<D>;
+    config: any;
     code?: string;
     request?: any;
     response?: AxiosResponse<T, D>;
@@ -64,7 +62,6 @@ export declare class ExecuteRequestError<T = any, D = any> extends Error impleme
     toJSON: () => object;
     /**
      * Creates an `ExecuteRequestError`.
-     *
      * @param message - The error message.
      * @param axiosError - The original Axios error.
      * @param responseStatus - The response status, if found in the original error.
@@ -73,7 +70,6 @@ export declare class ExecuteRequestError<T = any, D = any> extends Error impleme
     constructor(message: string, axiosError: AxiosError<T, D>, responseStatus: number | null, responseMessage: string | null);
     /**
      * Gets the full, descriptive error response returned from skyd on the portal.
-     *
      * @param err - The Axios error.
      * @returns - A new error if the error response is malformed, or the skyd error message otherwise.
      */

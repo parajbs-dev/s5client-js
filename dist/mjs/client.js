@@ -22,7 +22,6 @@ axios.interceptors.response.use(function (response) {
 export class S5Client {
     /**
      * The S5 Client which can be used to access S5-net.
-     *
      * @class
      * @param [initialPortalUrl] The initial portal URL to use to access S5, if specified. A request will be made to this URL to get the actual portal URL. To use the default portal while passing custom options, pass "".
      * @param [customOptions] Configuration for the client.
@@ -76,7 +75,6 @@ export class S5Client {
     /* istanbul ignore next */
     /**
      * Make the request for the API portal URL.
-     *
      * @returns - A promise that resolves when the request is complete.
      */
     async initPortalUrl() {
@@ -104,7 +102,6 @@ export class S5Client {
     /* istanbul ignore next */
     /**
      * Returns the API portal URL. Makes the request to get it if not done so already.
-     *
      * @returns - the portal URL.
      */
     async portalUrl() {
@@ -117,7 +114,6 @@ export class S5Client {
     }
     /**
      * Creates and executes a request.
-     *
      * @param config - Configuration for the request.
      * @returns - The response from axios.
      * @throws - Will throw `ExecuteRequestError` if the request fails. This error contains the original Axios error.
@@ -140,7 +136,7 @@ export class S5Client {
         // Build headers.
         const headers = buildRequestHeaders(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
         const auth = config.APIKey ? { username: "", password: config.APIKey } : undefined;
-        let onDownloadProgress = undefined;
+        let onDownloadProgress;
         if (config.onDownloadProgress) {
             onDownloadProgress = function (event) {
                 // Avoid NaN for 0-byte file.
@@ -150,7 +146,7 @@ export class S5Client {
                 config.onDownloadProgress(progress, event);
             };
         }
-        let onUploadProgress = undefined;
+        let onUploadProgress;
         if (config.onUploadProgress) {
             onUploadProgress = function (event) {
                 // Avoid NaN for 0-byte file.
@@ -163,8 +159,7 @@ export class S5Client {
         // NOTE: The error type is `ExecuteRequestError`. We set up a response
         // interceptor above that does the conversion from `AxiosError`.
         try {
-            return await axios({
-                url,
+            return await axios(url, {
                 method: config.method,
                 data: config.data,
                 headers,
@@ -199,7 +194,6 @@ export class S5Client {
      * Gets the current server URL for the portal. You should generally use
      * `portalUrl` instead - this method can be used for detecting whether the
      * current URL is a server URL.
-     *
      * @returns - The portal server URL.
      */
     async resolvePortalServerUrl() {
@@ -219,7 +213,6 @@ export class S5Client {
     }
     /**
      * Make a request to resolve the provided `initialPortalUrl`.
-     *
      * @returns - The portal URL.
      */
     async resolvePortalUrl() {

@@ -43,7 +43,6 @@ export declare class S5Client {
     };
     /**
      * The S5 Client which can be used to access S5-net.
-     *
      * @class
      * @param [initialPortalUrl] The initial portal URL to use to access S5, if specified. A request will be made to this URL to get the actual portal URL. To use the default portal while passing custom options, pass "".
      * @param [customOptions] Configuration for the client.
@@ -51,19 +50,16 @@ export declare class S5Client {
     constructor(initialPortalUrl?: string, customOptions?: CustomClientOptions);
     /**
      * Make the request for the API portal URL.
-     *
      * @returns - A promise that resolves when the request is complete.
      */
     initPortalUrl(): Promise<void>;
     /**
      * Returns the API portal URL. Makes the request to get it if not done so already.
-     *
      * @returns - the portal URL.
      */
     portalUrl(): Promise<string>;
     /**
      * Creates and executes a request.
-     *
      * @param config - Configuration for the request.
      * @returns - The response from axios.
      * @throws - Will throw `ExecuteRequestError` if the request fails. This error contains the original Axios error.
@@ -73,13 +69,11 @@ export declare class S5Client {
      * Gets the current server URL for the portal. You should generally use
      * `portalUrl` instead - this method can be used for detecting whether the
      * current URL is a server URL.
-     *
      * @returns - The portal server URL.
      */
     protected resolvePortalServerUrl(): Promise<string>;
     /**
      * Make a request to resolve the provided `initialPortalUrl`.
-     *
      * @returns - The portal URL.
      */
     protected resolvePortalUrl(): Promise<string>;

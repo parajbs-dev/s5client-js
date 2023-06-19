@@ -1,7 +1,6 @@
 import { addUrlQuery, addUrlSubdomain, ensureUrlPrefix, makeUrl } from "s5-utils-js";
 /**
  * Helper function that builds the request headers.
- *
  * @param [baseHeaders] - Any base headers.
  * @param [customUserAgent] - A custom user agent to set.
  * @param [customCookie] - A custom cookie.
@@ -25,7 +24,6 @@ export function buildRequestHeaders(baseHeaders, customUserAgent, customCookie, 
 /**
  * Helper function that builds the request URL. Ensures that the final URL
  * always has a protocol prefix for consistency.
- *
  * @param client - The S5 client.
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
@@ -93,7 +91,6 @@ export async function buildRequestUrl(client, parts) {
 export class ExecuteRequestError extends Error {
     /**
      * Creates an `ExecuteRequestError`.
-     *
      * @param message - The error message.
      * @param axiosError - The original Axios error.
      * @param responseStatus - The response status, if found in the original error.
@@ -128,7 +125,6 @@ export class ExecuteRequestError extends Error {
     }
     /**
      * Gets the full, descriptive error response returned from skyd on the portal.
-     *
      * @param err - The Axios error.
      * @returns - A new error if the error response is malformed, or the skyd error message otherwise.
      */

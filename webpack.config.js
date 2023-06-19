@@ -25,7 +25,8 @@ module.exports = {
     path: path.resolve(__dirname, "./dist/bundle"),
     // The filename needs to match the index.web.d.ts declarations file.
     filename: "index.js",
-    library: "skynet",
-    libraryTarget: "umd",
+    library: {
+      name: 's5client',
+      type: 'umd',
   },
 };

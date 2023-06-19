@@ -3,7 +3,6 @@ import { Headers } from "./request";
 import { JsonData } from "s5-utils-js";
 /**
  * Custom client options.
- *
  * @property [APIKey] - Authentication password to use for a single S5 node.
  * @property [s5ApiKey] - Authentication API key to use for a S5 portal (sets the "S5-Api-Key" header).
  * @property [authToken] - Account Authentication token to use for a S5 portal (sets the "S5-Api-Key" header).
@@ -29,7 +28,6 @@ export type CustomClientOptions = {
 export type BaseCustomOptions = CustomClientOptions;
 /**
  * Config options for a single request.
- *
  * @property endpointPath - The endpoint to contact.
  * @property [data] - The data for a POST request.
  * @property [url] - The full url to contact. Will be computed from the portalUrl and endpointPath if not provided.
@@ -78,7 +76,6 @@ export declare const DEFAULT_BASE_OPTIONS: {
 };
 /**
  * Custom download options.
- *
  * @property [endpointDownload] - The relative URL path of the portal endpoint to contact.
  * @property [download=false] - Indicates to `getCidUrl` whether the file should be downloaded (true) or opened in the browser (false). `downloadFile` and `openFile` override this value.
  * @property [path] - A path to append to the cid, e.g. `dir1/dir2/file`. A Unix-style path is expected. Each path component will be URL-encoded.
@@ -98,7 +95,6 @@ export type CustomGetMetadataOptions = BaseCustomOptions & {
 };
 /**
  * The response for a get metadata request.
- *
  * @property metadata - The metadata in JSON format.
  * @property portalUrl - The URL of the portal.
  * @property cid - 46-character cid.
@@ -112,7 +108,6 @@ export type CustomGetStorageLocationsOptions = BaseCustomOptions & {
 };
 /**
  * The response for a get metadata request.
- *
  * @property metadata - The metadata in JSON format.
  * @property portalUrl - The URL of the portal.
  * @property cid - 46-character cid.
@@ -136,7 +131,6 @@ export type CustomGetDownloadUrlsOptions = BaseCustomOptions & {
 };
 /**
  * The response for a get metadata request.
- *
  * @property metadata - The metadata in JSON format.
  * @property portalUrl - The URL of the portal.
  * @property cid - 46-character cid.
@@ -183,7 +177,6 @@ export declare const DEFAULT_GET_METADATA_OPTIONS: {
 };
 /**
  * Custom upload options.
- *
  * @property [endpointUpload] - The relative URL path of the portal endpoint to contact.
  * @property [endpointDirectoryUpload] - The relative URL path of the portal endpoint to contact for Directorys.
  * @property [endpointLargeUpload] - The relative URL path of the portal endpoint to contact for large uploads.
@@ -202,6 +195,7 @@ export type CustomUploadOptions = BaseCustomOptions & {
     customDirname?: string;
     errorPages?: JsonData;
     tryFiles?: string[];
+    encrypt?: boolean;
     largeFileSize?: number;
     retryDelays?: number[];
 };
@@ -228,7 +222,6 @@ export declare const PORTAL_DIRECTORY_FILE_FIELD_NAME = "files[]";
 export declare const DEFAULT_DIRECTORY_NAME = "dist";
 /**
  * The response to an upload request.
- *
  * @property cid - 46-character cid.
  */
 export type UploadRequestResponse = {
@@ -236,7 +229,6 @@ export type UploadRequestResponse = {
 };
 /**
  * The response to an upload request.
- *
  * @property cid - 46-character cid.
  */
 export type UploadTusRequestResponse = {
@@ -268,7 +260,6 @@ export type CustomUploadFromUrlOptions = BaseCustomOptions & {
 };
 /**
  * The response for a get metadata request.
- *
  * @property metadata - The metadata in JSON format.
  * @property portalUrl - The URL of the portal.
  * @property cid - 46-character cid.

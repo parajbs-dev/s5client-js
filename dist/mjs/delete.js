@@ -1,7 +1,6 @@
 import { DEFAULT_DELETE_OPTIONS } from "./defaults";
 /**
  * Deletes a S5 Cid using an HTTP DELETE request.
- *
  * @param this - An instance of S5Client.
  * @param cid - The S5 Cid to be deleted.
  * @param [customOptions] - Additional settings that can optionally be set.

@@ -26,6 +26,11 @@ module.exports = {
       fs: false
     },
   },
+  performance: {
+    hints: false,
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000
+  },
   output: {
     path: path.resolve(__dirname, "./example/dist"),
     // The filename needs to match the index.web.d.ts declarations file.

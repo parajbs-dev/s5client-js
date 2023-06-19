@@ -7,7 +7,6 @@ const request_1 = require("./request");
 const s5_utils_js_1 = require("s5-utils-js");
 /**
  * Uploads a file from a URL.
- *
  * @param this - The instance of the S5Client class.
  * @param dataurl - The URL of the file to be uploaded.
  * @param customOptions - Optional custom upload options.
@@ -29,7 +28,6 @@ async function uploadFromUrl(dataurl, customOptions) {
 exports.uploadFromUrl = uploadFromUrl;
 /**
  * Uploads data to S5-net.
- *
  * @param this - S5Client
  * @param data - The data to upload.
  * @param filename - The name of uploaded Data file.
@@ -66,7 +64,6 @@ async function uploadData(data, filename, customOptions) {
 exports.uploadData = uploadData;
 /**
  * Creates a File object from the provided data, file name, and file type.
- *
  * @param data - The data of the file, which can be a string, an ArrayBuffer, or a Uint8Array.
  * @param fileName - The name of the file.
  * @param fileType - The type (MIME type) of the file.
@@ -88,13 +85,12 @@ function createFileFromData(data, fileName, fileType) {
 exports.createFileFromData = createFileFromData;
 /**
  * Uploads a file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointUpload="/s5/upload"] - The relative URL path of the portal endpoint to contact for small uploads.
- * @param [customOptions.endpointDirectoryUpload="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact for Directory uploads.
- * @param [customOptions.endpointLargeUpload="/s5/upload/tus"] - The relative URL path of the portal endpoint to contact for large uploads.
+ * @param [customOptions.endpointUpload] - The relative URL path of the portal endpoint to contact for small uploads.
+ * @param [customOptions.endpointDirectoryUpload] - The relative URL path of the portal endpoint to contact for Directory uploads.
+ * @param [customOptions.endpointLargeUpload] - The relative URL path of the portal endpoint to contact for large uploads.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
@@ -110,11 +106,10 @@ async function uploadFile(file, customOptions) {
 exports.uploadFile = uploadFile;
 /**
  * Uploads a small file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointUpload="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointUpload] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
@@ -126,11 +121,10 @@ async function uploadSmallFile(file, customOptions) {
 exports.uploadSmallFile = uploadSmallFile;
 /**
  * Makes a request to upload a small file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  */
 async function uploadSmallFileRequest(file, customOptions) {
@@ -155,11 +149,10 @@ exports.uploadSmallFileRequest = uploadSmallFileRequest;
 /* istanbul ignore next */
 /**
  * Uploads a large file to S5-net using tus.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointLargeUpload="/s5/upload/tus"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointLargeUpload] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
@@ -172,11 +165,10 @@ exports.uploadLargeFile = uploadLargeFile;
 /* istanbul ignore next */
 /**
  * Makes a request to upload a file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointLargeUpload="/s5/upload/tus"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointLargeUpload] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  */
 async function uploadLargeFileRequest(file, customOptions) {
@@ -196,19 +188,42 @@ async function uploadLargeFileRequest(file, customOptions) {
             // @ts-expect-error TS complains.
             opts.onUploadProgress(progress, { loaded: bytesSent, total: bytesTotal });
         };
-    const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
-    const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
-    const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
-    const mHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(mhash);
-    const zCid = (0, s5_utils_js_1.encodeCIDWithPrefixZ)(cid);
+    let mHashBase64url;
+    let zCid;
+    let encryptedUploadFile;
+    let mhashEncryptedBase64url;
+    let uCidEncrypted;
+    if (opts.encrypt) {
+        const encryptKey = await (0, s5_utils_js_1.generateKeyXchacha20)();
+        const { encryptedFile } = await (0, s5_utils_js_1.encryptFile)(file, encryptKey);
+        encryptedUploadFile = encryptedFile;
+        const b3hashEncrypted = await (0, s5_utils_js_1.calculateB3hashFromFile)(encryptedFile);
+        const mhashEncrypted = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hashEncrypted);
+        const { encryptedCidBuffer } = await (0, s5_utils_js_1.generateEncryptedCIDFromMHash)(mhashEncrypted, file);
+        mhashEncryptedBase64url = (0, s5_utils_js_1.convertMHashToB64url)(mhashEncrypted);
+        uCidEncrypted = (0, s5_utils_js_1.encodeCIDWithPrefixU)(encryptedCidBuffer);
+    }
+    else {
+        const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
+        const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
+        const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
+        mHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(mhash);
+        zCid = (0, s5_utils_js_1.encodeCIDWithPrefixZ)(cid);
+    }
     return new Promise((resolve, reject) => {
         const tusOpts = {
             endpoint: url,
-            metadata: {
-                hash: mHashBase64url,
-                filename,
-                filetype: file.type,
-            },
+            metadata: opts.encrypt
+                ? {
+                    hash: mhashEncryptedBase64url,
+                    filename,
+                    filetype: file.type,
+                }
+                : {
+                    hash: mHashBase64url,
+                    filename,
+                    filetype: file.type,
+                },
             headers,
             onProgress,
             onBeforeRequest: function (req) {
@@ -226,22 +241,30 @@ async function uploadLargeFileRequest(file, customOptions) {
                     reject(new Error("'upload.url' was not set"));
                     return;
                 }
-                const resolveData = { data: { cid: zCid } };
+                let resCid;
+                if (opts.encrypt)
+                    resCid = uCidEncrypted;
+                else
+                    resCid = zCid;
+                const resolveData = { data: { cid: resCid } };
                 resolve(resolveData);
             },
         };
-        const upload = new tus_js_client_1.Upload(file, tusOpts);
+        let upload;
+        if (opts.encrypt)
+            upload = new tus_js_client_1.Upload(encryptedUploadFile, tusOpts);
+        else
+            upload = new tus_js_client_1.Upload(file, tusOpts);
         upload.start();
     });
 }
 exports.uploadLargeFileRequest = uploadLargeFileRequest;
 /**
  * Uploads a directory to S5-net.
- *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
@@ -253,11 +276,10 @@ async function uploadDirectory(directory, customOptions) {
 exports.uploadDirectory = uploadDirectory;
 /**
  * Makes a request to upload a directory to S5-net.
- *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  * @throws - Will throw if the input filename is not a string.
  */
@@ -292,11 +314,10 @@ async function uploadDirectoryRequest(directory, customOptions) {
 exports.uploadDirectoryRequest = uploadDirectoryRequest;
 /**
  * Uploads a directory to S5-net.
- *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
@@ -308,11 +329,10 @@ async function uploadWebapp(directory, customOptions) {
 exports.uploadWebapp = uploadWebapp;
 /**
  * Makes a request to upload a directory to S5-net.
- *
  * @param this - S5Client
  * @param directory - File objects to upload, indexed by their path strings.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload/directory"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  * @throws - Will throw if the input filename is not a string.
  */
@@ -357,7 +377,6 @@ exports.uploadWebappRequest = uploadWebappRequest;
  * reading it after the file has been appended to form data. To overcome this,
  * we recreate the file object using native File constructor with a type defined
  * as a constructor argument.
- *
  * @param file - The input file.
  * @returns - The processed file.
  */

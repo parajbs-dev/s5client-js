@@ -1,4 +1,4 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 
 import { S5Client } from "./client";
 import { addUrlQuery, addUrlSubdomain, ensureUrlPrefix, makeUrl } from "s5-utils-js";
@@ -7,7 +7,6 @@ export type Headers = { [key: string]: string };
 
 /**
  * Helper function that builds the request headers.
- *
  * @param [baseHeaders] - Any base headers.
  * @param [customUserAgent] - A custom user agent to set.
  * @param [customCookie] - A custom cookie.
@@ -37,7 +36,6 @@ export function buildRequestHeaders(
 /**
  * Helper function that builds the request URL. Ensures that the final URL
  * always has a protocol prefix for consistency.
- *
  * @param client - The S5 client.
  * @param parts - The URL parts to use when constructing the URL.
  * @param [parts.baseUrl] - The base URL to use, instead of the portal URL.
@@ -128,7 +126,8 @@ export class ExecuteRequestError<T = any, D = any> extends Error implements Axio
 
   // Properties required by `AxiosError`.
 
-  config: AxiosRequestConfig<D>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: any;
   code?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   request?: any;
@@ -139,7 +138,6 @@ export class ExecuteRequestError<T = any, D = any> extends Error implements Axio
 
   /**
    * Creates an `ExecuteRequestError`.
-   *
    * @param message - The error message.
    * @param axiosError - The original Axios error.
    * @param responseStatus - The response status, if found in the original error.
@@ -186,7 +184,6 @@ export class ExecuteRequestError<T = any, D = any> extends Error implements Axio
 
   /**
    * Gets the full, descriptive error response returned from skyd on the portal.
-   *
    * @param err - The Axios error.
    * @returns - A new error if the error response is malformed, or the skyd error message otherwise.
    */

@@ -3,14 +3,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDownloadUrls = exports.getStorageLocations = exports.getMetadata = exports.getCidUrl = exports.downloadDirectory = exports.downloadFile = exports.downloadData = void 0;
+exports.getDownloadUrls = exports.getStorageLocations = exports.getMetadata = exports.getCidUrl = exports.downloadDirectory = exports.downloadFile = exports.downloadData = exports.downloadDataDecrypted = void 0;
 const defaults_1 = require("./defaults");
 const file_saver_1 = require("file-saver");
 const jszip_1 = __importDefault(require("jszip"));
 const s5_utils_js_1 = require("s5-utils-js");
 /**
  * Downloads in-memory data from a S5 cid.
- *
+ * @param this - S5Client
+ * @param cid - 46-character cid, or a valid cid URL. Can be followed by a path. Note that the cid will not be encoded, so if your path might contain special characters, consider using `customOptions.path`.
+ * @param [customOptions] - Additional settings that can optionally be set.
+ * @returns - The data
+ */
+async function downloadDataDecrypted(cid, customOptions) {
+    const opts = { ...defaults_1.DEFAULT_DOWNLOAD_OPTIONS, ...this.customOptions, ...customOptions, download: true };
+    // encrptedCIDto
+    const response = await this.executeRequest({
+        ...opts,
+        method: "get",
+        extraPath: cid,
+        responseType: "arraybuffer",
+    });
+    return response.data;
+}
+exports.downloadDataDecrypted = downloadDataDecrypted;
+/**
+ * Downloads in-memory data from a S5 cid.
  * @param this - S5Client
  * @param cid - 46-character cid, or a valid cid URL. Can be followed by a path. Note that the cid will not be encoded, so if your path might contain special characters, consider using `customOptions.path`.
  * @param [customOptions] - Additional settings that can optionally be set.
@@ -29,11 +47,10 @@ async function downloadData(cid, customOptions) {
 exports.downloadData = downloadData;
 /**
  * Initiates a download of the content of the cid within the browser.
- *
  * @param this - S5Client
  * @param cid - 46-character cid, or a valid cid URL. Can be followed by a path. Note that the cid will not be encoded, so if your path might contain special characters, consider using `customOptions.path`.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointDownload="/"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointDownload] - The relative URL path of the portal endpoint to contact.
  * @returns - The full URL that was used.
  * @throws - Will throw if the cid does not contain a cid or if the path option is not a string.
  */
@@ -47,7 +64,6 @@ async function downloadFile(cid, customOptions) {
 exports.downloadFile = downloadFile;
 /**
  * Initiates a downloads from the directory all contents of the cid to a zip file within the browser.
- *
  * @param this - S5Client
  * @param cid - 46-character cid, or a valid cid URL.
  * @param filename - The filename of the downloaded zip file.
@@ -96,11 +112,10 @@ async function downloadDirectory(cid, filename, customOptions) {
 exports.downloadDirectory = downloadDirectory;
 /**
  * Constructs the full URL for the given cid.
- *
  * @param this - S5Client
  * @param cid - Base64 cid, or a valid URL that contains a cid. See `downloadFile`.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointDownload="/"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointDownload] - The relative URL path of the portal endpoint to contact.
  * @returns - The full URL for the cid.
  * @throws - Will throw if the cid does not contain a cid or if the path option is not a string.
  */
@@ -113,11 +128,10 @@ async function getCidUrl(cid, customOptions) {
 exports.getCidUrl = getCidUrl;
 /**
  * Gets only the metadata for the given cid without the contents.
- *
  * @param this - S5Client
  * @param cid - Base64 cid.
  * @param [customOptions] - Additional settings that can optionally be set. See `downloadFile` for the full list.
- * @param [customOptions.endpointGetMetadata="/"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointGetMetadata] - The relative URL path of the portal endpoint to contact.
  * @returns - The metadata in JSON format. Empty if no metadata was found.
  * @throws - Will throw if the cid does not contain a cid .
  */
@@ -133,7 +147,6 @@ async function getMetadata(cid, customOptions) {
 exports.getMetadata = getMetadata;
 /**
  * Retrieves storage locations for a given CID.
- *
  * @param this - S5Client
  * @param cid - The CID value for which storage locations are to be retrieved.
  * @param customOptions - Custom options to be passed for the request (optional).
@@ -156,7 +169,6 @@ async function getStorageLocations(cid, customOptions) {
 exports.getStorageLocations = getStorageLocations;
 /**
  * Retrieves the download URLs for a given CID (Content Identifier).
- *
  * @param this - S5Client
  * @param cid - The CID (Content Identifier) for which to retrieve the download URLs.
  * @param customOptions - Optional custom options for the request.

@@ -4,7 +4,6 @@ exports.pinCid = void 0;
 const defaults_1 = require("./defaults");
 /**
  * Pins a S5 Cid using the S5Client instance.
- *
  * @param this - The instance of the S5Client object.
  * @param cid - The CID to be pinned.
  * @param [customOptions] - Additional settings that can optionally be set.

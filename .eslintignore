@@ -2,5 +2,9 @@ dist
 webpack.config.js
 webpack.dev.js
 webpack.example.config.js
+webpack.assets.config.js
 example/config.js
 example/example_config.js
+example/sw.js
+example/sw-local.js
+encrypt_file

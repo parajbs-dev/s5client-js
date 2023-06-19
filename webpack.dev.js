@@ -3,7 +3,7 @@ const common = require('./webpack.example.config.js');
 
 module.exports = merge(common, {
   mode: 'development',
-  devtool: 'inline-source-map',
+  devtool: false,
   devServer: {
     static: {
       directory: './example/', // Update this line to serve files from the root directory
