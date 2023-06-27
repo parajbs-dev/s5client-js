@@ -35,7 +35,6 @@ pub fn generate_key() -> Vec<u8> {
     key.to_vec()
 }
 
-// // Deterministic version
 fn encrypt_file_xchacha20_internal<R: Read>(mut reader: R, key: &[u8], padding: usize) -> Vec<u8> {
     // Define a fixed key
     //    let key = GenericArray::from_slice(&[0u8; 32]);
