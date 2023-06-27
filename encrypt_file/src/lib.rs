@@ -36,9 +36,6 @@ pub fn generate_key() -> Vec<u8> {
 }
 
 fn encrypt_file_xchacha20_internal<R: Read>(mut reader: R, key: &[u8], padding: usize) -> Vec<u8> {
-    // Define a fixed key
-    //    let key = GenericArray::from_slice(&[0u8; 32]);
-
     let key = GenericArray::from_slice(key);
     let cipher = XChaCha20Poly1305::new(key);
 
