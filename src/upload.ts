@@ -1,17 +1,8 @@
 import { AxiosResponse } from "axios";
-import {
-  DetailedError,
-  HttpRequest,
-  Upload,
-  FileSource,
-  SliceResult,
-  FileReader as TusFileReader,
-} from "tus-js-client";
+import { DetailedError, HttpRequest, Upload } from "tus-js-client";
 
 import { S5Client } from "./client";
 import { Buffer } from "buffer";
-
-import * as blake3 from "blake3-wasm";
 
 import {
   PORTAL_FILE_FIELD_NAME,
@@ -34,54 +25,19 @@ import {
   generateMHashFromB3hash,
   convertMHashToB64url,
   cidTypeEncrypted,
-  mhashBlake3Default,
   encryptionAlgorithmXChaCha20Poly1305,
 } from "s5-utils-js";
 
-import __wbg_init, { encrypt_file_xchacha20, generate_key } from "../encrypt_file/pkg/encrypt_file";
+import __wbg_init, { generate_key } from "../encrypt_file/pkg/encrypt_file";
 
-// Might want to add this for export from s5-utils-js
-const chunkSizeAsPowerOf2 = 18;
-
-export async function calculateB3hashFromFileEncrypt(
-  file: File,
-  encryptedKey: Uint8Array
-): Promise<{ b3hash: Buffer; encryptedFileSize: number }> {
-  // Load the BLAKE3 library asynchronously
-  await blake3.load();
-
-  // Create a hash object
-  const hasher = blake3.createHash();
-
-  // Define the chunk size (1 MB)
-  const chunkSize = 262144; // 1024 * 1024;
-  // Initialize the position to 0
-  let position = 0;
-  let encryptedFileSize = 0;
-
-  // Process the file in chunks
-  while (position <= file.size) {
-    // Slice the file to extract a chunk
-    const chunk = file.slice(position, position + chunkSize);
-
-    // Convert chunk's ArrayBuffer to hex string and log it
-    const chunkArrayBuffer = await chunk.arrayBuffer();
-    const chunkUint8Array = new Uint8Array(chunkArrayBuffer);
-    const encryptedChunkUint8Array = encrypt_file_xchacha20(chunkUint8Array, encryptedKey, 0x0);
-    encryptedFileSize += encryptedChunkUint8Array.length;
-
-    // Update the hash with the chunk's data
-    hasher.update(encryptedChunkUint8Array);
-
-    // Move to the next position
-    position += chunkSize;
-  }
-
-  // Obtain the final hash value
-  const b3hash = hasher.digest();
-  // Return the hash value as a Promise resolved to a Buffer
-  return { b3hash: b3hash, encryptedFileSize };
-}
+import {
+  chunkSizeAsPowerOf2,
+  calculateB3hashFromFileEncrypt,
+  removeKeyFromEncryptedCid,
+  createEncryptedCid,
+  encryptFile,
+  getReaderFromFileEncrypt,
+} from "./encryptWasm";
 
 /**
  * Uploads a file from a URL.
@@ -177,115 +133,6 @@ export function createFileFromData(data: string | ArrayBuffer | Uint8Array, file
   }
 
   return file;
-}
-
-function removeKeyFromEncryptedCid(encryptedCid: string): string {
-  return encryptedCid.slice(0, -96) + encryptedCid.slice(-53);
-}
-
-export function combineKeytoEncryptedCid(key: string, encryptedCidWithoutKey: string): string {
-  return encryptedCidWithoutKey.slice(0, -54) + key + encryptedCidWithoutKey.slice(-53);
-}
-
-/**
- * Creates an encrypted Content Identifier (CID) from the provided parameters.
- *
- * @param cidTypeEncrypted - The encrypted type of the CID.
- * @param encryptionAlgorithm - The encryption algorithm used.
- * @param chunkSizeAsPowerOf2 - The chunk size as a power of 2.
- * @param encryptedBlobHash - The encrypted hash of the blob.
- * @param encryptionKey - The encryption key used.
- * @param padding - Additional padding to be used.
- * @param originalCid - The original CID before encryption.
- * @returns A Uint8Array representing the encrypted CID.
- */
-function createEncryptedCid(
-  cidTypeEncrypted: number,
-  encryptionAlgorithm: number,
-  chunkSizeAsPowerOf2: number,
-  encryptedBlobHash: Uint8Array,
-  encryptionKey: Uint8Array,
-  padding: number,
-  originalCid: Uint8Array
-): Uint8Array {
-  let result: number[] = [];
-  result.push(cidTypeEncrypted);
-  result.push(encryptionAlgorithm);
-  result.push(chunkSizeAsPowerOf2);
-  result.push(...Array.from(encryptedBlobHash));
-  result.push(...Array.from(encryptionKey));
-  result.push(...Array.from(new Uint8Array(new Uint32Array([padding]).buffer))); // convert padding to big-endian
-  result.push(...Array.from(originalCid));
-
-  return new Uint8Array(result);
-}
-
-/**
-Encrypts a file using a specified encryption key and CID. This function
-first reads the input file and converts it into a Uint8Array format.
-It then initializes a WebAssembly (WASM) module and calls an encryption
-function to encrypt the file content. The encrypted file content is then
-converted back into a Blob and then into a File object.
-It also computes the encrypted blob hash, constructs the encrypted CID,
-and returns the encrypted file along with the encrypted CID.
-@param file - The file to be encrypted.
-@param filename - The name of the file.
-@param encryptedKey - The encryption key to be used.
-@param cid - The Content Identifier of the file.
-@returns A promise that resolves with an object containing the encrypted file
-and the encrypted CID.
-*/
-async function encryptFile(
-  file: File,
-  filename: string,
-  encryptedKey: Uint8Array,
-  cid: Buffer
-): Promise<{
-  encryptedFile: File;
-  encryptedCid: string;
-  //  encryptedBlobMHashBase64url: string;
-}> {
-  // Convert the File object to a Uint8Array
-  const reader = new FileReader();
-  reader.readAsArrayBuffer(file);
-  await new Promise((resolve) => {
-    reader.onload = (event) => {
-      resolve(event);
-    };
-  });
-  const fileContents = new Uint8Array(reader.result as ArrayBuffer);
-
-  // Call the function to encrypt the file
-  const encryptedFileBytes = encrypt_file_xchacha20(fileContents, encryptedKey, 0x0);
-
-  // Convert Uint8Array to Blob
-  const blob = new Blob([encryptedFileBytes], { type: "application/octet-stream" });
-
-  // Convert Blob to File
-  const encryptedFile = new File([blob], filename, { type: "application/octet-stream", lastModified: Date.now() });
-
-  const { b3hash } = await calculateB3hashFromFileEncrypt(file, encryptedKey);
-
-  const encryptedBlobHash = Buffer.concat([Buffer.alloc(1, mhashBlake3Default), Buffer.from(b3hash)]);
-
-  const padding: number = 0;
-
-  const encryptedCidBytes = createEncryptedCid(
-    cidTypeEncrypted,
-    encryptionAlgorithmXChaCha20Poly1305,
-    chunkSizeAsPowerOf2,
-    encryptedBlobHash,
-    encryptedKey,
-    padding,
-    cid
-  );
-
-  const encryptedCid = "u" + convertMHashToB64url(Buffer.from(encryptedCidBytes));
-
-  return {
-    encryptedFile,
-    encryptedCid,
-  };
 }
 
 /**
@@ -432,100 +279,6 @@ export async function uploadLargeFile(
   return responsedS5Cid;
 }
 
-function getReaderFromFile(file: File): ReadableStreamDefaultReader<Uint8Array> {
-  if (!file) {
-    throw new Error("No file chosen");
-  }
-
-  const reader = file.stream().getReader();
-  const stream = new ReadableStream({
-    start(controller) {
-      // The following function handles each data chunk
-      function push() {
-        // "done" is a Boolean and value a "Uint8Array"
-        reader.read().then(({ done, value }) => {
-          // Is there no more data to read?
-          if (done) {
-            // Tell the browser that we have finished sending data
-            controller.close();
-            return;
-          }
-
-          // Get the data and send it to the browser via the controller
-          controller.enqueue(value);
-          push();
-        });
-      }
-
-      push();
-    },
-  });
-
-  // Now you can use the stream as you see fit
-  // Here's an example of creating a new Response from the stream
-  new Response(stream, { headers: { "Content-Type": file.type } });
-
-  return reader;
-}
-
-/**
-Creates a ReadableStreamDefaultReader from an encrypted file. This function
-first gets a reader from the input file's stream. It then creates a new
-readable stream where the encryption is applied to each chunk of data read
-from the original reader. The function uses the WASM module and the
-encryption function to encrypt the chunks. Encrypted chunks are then
-enqueued in the new stream's controller. When the original reader is done,
-any remaining data in the buffer is also encrypted and enqueued. Finally,
-the function returns a reader from the new stream.
-@param file - The file to be encrypted.
-@param key - The encryption key to be used.
-@returns A ReadableStreamDefaultReader of the encrypted file chunks.
-*/
-function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableStreamDefaultReader<Uint8Array> {
-  const originalReader = file.stream().getReader();
-  const chunkSize = 262144; // Chunk size in bytes
-
-  const modifiedStream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      let buffer = new Uint8Array(0);
-
-      while (true) {
-        const { done, value } = await originalReader.read();
-
-        // Check if done, if so process remaining buffer and break
-        if (done) {
-          if (buffer.length > 0) {
-            const encryptedChunkUint8Array = encrypt_file_xchacha20(buffer, key, 0x0);
-            controller.enqueue(encryptedChunkUint8Array);
-          }
-          controller.close();
-          return;
-        }
-
-        // If value is not undefined, append the new data to the buffer
-        if (value) {
-          let newBuffer = new Uint8Array(buffer.length + value.length);
-          newBuffer.set(buffer);
-          newBuffer.set(value, buffer.length);
-          buffer = newBuffer;
-        }
-
-        while (buffer.length >= chunkSize) {
-          // If the buffer is large enough, encrypt and enqueue the data
-          const chunk = buffer.slice(0, chunkSize);
-          const encryptedChunkUint8Array = encrypt_file_xchacha20(chunk, key, 0x0);
-          controller.enqueue(encryptedChunkUint8Array);
-
-          // Create a new buffer with any remaining data
-          buffer = buffer.slice(chunkSize);
-        }
-      }
-    },
-  });
-
-  return modifiedStream.getReader();
-}
-
 /* istanbul ignore next */
 /**
  * Makes a request to upload a file to S5-net.
@@ -586,7 +339,7 @@ export async function uploadLargeFileRequest(
     const encryptedBlobHash = generateMHashFromB3hash(b3hashEncrypt);
     encryptedBlobMHashBase64url = convertMHashToB64url(encryptedBlobHash);
 
-    const padding: number = 0;
+    const padding = 0;
 
     const cid = generateCIDFromMHash(mhash, file);
 
@@ -607,7 +360,7 @@ export async function uploadLargeFileRequest(
     zCid = encodeCIDWithPrefixZ(cid);
   }
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const tusOpts = {
       endpoint: url,
       metadata: opts.encrypt
