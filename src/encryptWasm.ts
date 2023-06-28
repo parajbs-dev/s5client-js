@@ -9,7 +9,7 @@ import {
   encryptionAlgorithmXChaCha20Poly1305,
 } from "s5-utils-js";
 
-import __wbg_init, { encrypt_file_xchacha20, generate_key } from "../encrypt_file/pkg/encrypt_file";
+import __wbg_init, { encrypt_file_xchacha20 } from "../encrypt_file/pkg/encrypt_file";
 
 // Might want to add this for export from s5-utils-js
 export const chunkSizeAsPowerOf2 = 18;
@@ -80,7 +80,6 @@ export function combineKeytoEncryptedCid(key: string, encryptedCidWithoutKey: st
 
 /**
  * Creates an encrypted Content Identifier (CID) from the provided parameters.
- *
  * @param cidTypeEncrypted - The encrypted type of the CID.
  * @param encryptionAlgorithm - The encryption algorithm used.
  * @param chunkSizeAsPowerOf2 - The chunk size as a power of 2.
