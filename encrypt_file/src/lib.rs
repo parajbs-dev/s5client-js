@@ -58,13 +58,18 @@ fn encrypt_file_xchacha20_internal<R: Read>(mut reader: R, key: &[u8], padding: 
             count
         };
 
-        let nonce = XNonce::default();
+        let mut nonce = XNonce::default();
 
-        let ciphertext = cipher.encrypt(&nonce, &buffer[..length]).unwrap();
-        let ciphertext_hex = hex::encode(&ciphertext);
-        println!("{}", ciphertext_hex);
+        let mut foo = [0u8; 24];
+        for (place, data) in foo.iter_mut().zip(chunk_index.to_le_bytes().iter()) {
+            *place = *data
+        }
 
-        output.extend_from_slice(&ciphertext);
+        nonce.copy_from_slice(&foo);
+
+        let ciphertext = cipher.encrypt(&nonce, &buffer[..length]);
+
+        output.extend_from_slice(&ciphertext.unwrap());
         chunk_index = chunk_index + 1;
     }
 
