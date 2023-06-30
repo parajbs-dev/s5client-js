@@ -366,7 +366,7 @@ export async function uploadLargeFileRequest(
           },
       //      fileReader: myFileReader,
       headers,
-      chunkSize: 262144,
+      chunkSize: opts.encrypt ? 262160 : 262144,
       uploadSize: fileEncryptSize,
       onProgress,
       onBeforeRequest: function (req: HttpRequest) {

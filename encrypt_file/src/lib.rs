@@ -17,10 +17,12 @@ pub fn encrypt_file_xchacha20(
     input_file: &[u8],
     key: &[u8],
     padding: usize,
+    chunk_index: Option<u32>,
 ) -> Result<Vec<u8>, JsValue> {
     let reader = Cursor::new(input_file);
 
-    let encrypted_file = encrypt_file_xchacha20_internal(reader, key, padding);
+    let encrypted_file =
+        encrypt_file_xchacha20_internal(reader, key, padding, chunk_index.unwrap_or(0));
     //    let key: Vec<u8> = res.1;
 
     Ok(encrypted_file)
@@ -35,11 +37,14 @@ pub fn generate_key() -> Vec<u8> {
     key.to_vec()
 }
 
-fn encrypt_file_xchacha20_internal<R: Read>(mut reader: R, key: &[u8], padding: usize) -> Vec<u8> {
+fn encrypt_file_xchacha20_internal<R: Read>(
+    mut reader: R,
+    key: &[u8],
+    padding: usize,
+    mut chunk_index: u32,
+) -> Vec<u8> {
     let key = GenericArray::from_slice(key);
     let cipher = XChaCha20Poly1305::new(key);
-
-    let mut chunk_index: u32 = 0;
 
     let chunk_size = 262144;
 

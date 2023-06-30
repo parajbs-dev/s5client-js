@@ -197,6 +197,7 @@ export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableS
   const modifiedStream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let buffer = new Uint8Array(0);
+      let chunkIndex = 0;
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
@@ -205,8 +206,10 @@ export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableS
         // Check if done, if so process remaining buffer and break
         if (done) {
           if (buffer.length > 0) {
-            const encryptedChunkUint8Array = encrypt_file_xchacha20(buffer, key, 0x0);
+            const encryptedChunkUint8Array = encrypt_file_xchacha20(buffer, key, 0x0, chunkIndex);
             controller.enqueue(encryptedChunkUint8Array);
+            console.log("getReaderFromFileEncrypt: buffer.length = ", buffer.length);
+            console.log("getReaderFromFileEncrypt: chunkIndex = ", chunkIndex);
           }
           controller.close();
           return;
@@ -223,11 +226,14 @@ export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableS
         while (buffer.length >= chunkSize) {
           // If the buffer is large enough, encrypt and enqueue the data
           const chunk = buffer.slice(0, chunkSize);
-          const encryptedChunkUint8Array = encrypt_file_xchacha20(chunk, key, 0x0);
+          const encryptedChunkUint8Array = encrypt_file_xchacha20(chunk, key, 0x0, chunkIndex);
           controller.enqueue(encryptedChunkUint8Array);
 
           // Create a new buffer with any remaining data
+          console.log("getReaderFromFileEncrypt: buffer.length = ", buffer.length);
           buffer = buffer.slice(chunkSize);
+          console.log("getReaderFromFileEncrypt: chunkIndex = ", chunkIndex);
+          chunkIndex++;
         }
       }
     },
