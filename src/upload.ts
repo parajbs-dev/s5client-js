@@ -202,18 +202,16 @@ export async function uploadSmallFileRequest(
   const mhash = generateMHashFromB3hash(b3hash);
   const cid = generateCIDFromMHash(mhash, file);
 
-  // If customOptions.encrypt is true, encrypt the file before uploading.
-  let encryptedFile: File;
-  let encryptedCid: string;
-
-  // Initialize the WASM module
-  await __wbg_init();
-
-  const encryptedKey = generate_key();
-
   let response: AxiosResponse;
+
+  // If customOptions.encrypt is true, encrypt the file before uploading.
   if (opts.encrypt) {
-    ({ encryptedFile, encryptedCid } = await encryptFile(file, file.name, encryptedKey, cid));
+    // Initialize the WASM module
+    await __wbg_init();
+
+    const encryptedKey = generate_key();
+
+    let { encryptedFile, encryptedCid } = await encryptFile(file, file.name, encryptedKey, cid);
     encryptedFile = ensureFileObjectConsistency(encryptedFile);
 
     if (opts.customFilename) {

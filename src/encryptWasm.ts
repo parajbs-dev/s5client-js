@@ -4,6 +4,7 @@ import * as blake3 from "blake3-wasm";
 
 import {
   convertMHashToB64url,
+  calculateB3hashFromFile,
   cidTypeEncrypted,
   mhashBlake3Default,
   encryptionAlgorithmXChaCha20Poly1305,
@@ -153,9 +154,8 @@ export async function encryptFile(
   // Convert Blob to File
   const encryptedFile = new File([blob], filename, { type: "application/octet-stream", lastModified: Date.now() });
 
-  const { b3hash } = await calculateB3hashFromFileEncrypt(file, encryptedKey);
-
-  const encryptedBlobHash = Buffer.concat([Buffer.alloc(1, mhashBlake3Default), Buffer.from(b3hash)]);
+  const b3hash = await calculateB3hashFromFile(encryptedFile);
+  const encryptedBlobHash = Buffer.concat([Buffer.alloc(1, mhashBlake3Default), b3hash]);
 
   const padding = 0;
 
