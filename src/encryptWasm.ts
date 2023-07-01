@@ -36,6 +36,7 @@ export async function calculateB3hashFromFileEncrypt(
   // Initialize the position to 0
   let position = 0;
   let encryptedFileSize = 0;
+  let chunkIndex = 0;
 
   // Process the file in chunks
   while (position <= file.size) {
@@ -45,7 +46,7 @@ export async function calculateB3hashFromFileEncrypt(
     // Convert chunk's ArrayBuffer to hex string and log it
     const chunkArrayBuffer = await chunk.arrayBuffer();
     const chunkUint8Array = new Uint8Array(chunkArrayBuffer);
-    const encryptedChunkUint8Array = encrypt_file_xchacha20(chunkUint8Array, encryptedKey, 0x0);
+    const encryptedChunkUint8Array = encrypt_file_xchacha20(chunkUint8Array, encryptedKey, 0x0, chunkIndex);
     encryptedFileSize += encryptedChunkUint8Array.length;
 
     // Update the hash with the chunk's data
@@ -53,6 +54,7 @@ export async function calculateB3hashFromFileEncrypt(
 
     // Move to the next position
     position += chunkSize;
+    chunkIndex++;
   }
 
   // Obtain the final hash value
@@ -208,8 +210,6 @@ export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableS
           if (buffer.length > 0) {
             const encryptedChunkUint8Array = encrypt_file_xchacha20(buffer, key, 0x0, chunkIndex);
             controller.enqueue(encryptedChunkUint8Array);
-            console.log("getReaderFromFileEncrypt: buffer.length = ", buffer.length);
-            console.log("getReaderFromFileEncrypt: chunkIndex = ", chunkIndex);
           }
           controller.close();
           return;
@@ -230,9 +230,7 @@ export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableS
           controller.enqueue(encryptedChunkUint8Array);
 
           // Create a new buffer with any remaining data
-          console.log("getReaderFromFileEncrypt: buffer.length = ", buffer.length);
           buffer = buffer.slice(chunkSize);
-          console.log("getReaderFromFileEncrypt: chunkIndex = ", chunkIndex);
           chunkIndex++;
         }
       }

@@ -211,6 +211,7 @@ export async function uploadSmallFileRequest(
 
     const encryptedKey = generate_key();
 
+    // eslint-disable-next-line
     let { encryptedFile, encryptedCid } = await encryptFile(file, file.name, encryptedKey, cid);
     encryptedFile = ensureFileObjectConsistency(encryptedFile);
 
