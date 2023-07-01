@@ -205,7 +205,7 @@ export function getTransformerEncrypt(key: Uint8Array): TransformStream<Uint8Arr
         controller.enqueue(await encryptedChunkUint8Array);
 
         buffer = buffer.slice(chunkSize);
-        console.log("getTransformerEncrypt: chunkIndex = ", chunkIndex);
+        console.log("encrypt: chunkIndex = ", chunkIndex);
         chunkIndex++;
       }
     },
@@ -217,7 +217,7 @@ export function getTransformerEncrypt(key: Uint8Array): TransformStream<Uint8Arr
         controller.enqueue(await encryptedChunkUint8Array);
 
         buffer = buffer.slice(Math.min(chunkSize, buffer.length));
-        console.log("getTransformerEncrypt: chunkIndex = ", chunkIndex);
+        console.log("encrypt: chunkIndex = ", chunkIndex);
         chunkIndex++;
       }
     },
