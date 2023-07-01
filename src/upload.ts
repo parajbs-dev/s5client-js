@@ -36,7 +36,7 @@ import {
   removeKeyFromEncryptedCid,
   createEncryptedCid,
   encryptFile,
-  getReaderFromFileEncrypt,
+  getTransformerEncrypt,
 } from "./encryptWasm";
 
 /**
@@ -399,7 +399,12 @@ export async function uploadLargeFileRequest(
       },
     };
 
-    const reader = getReaderFromFileEncrypt(file, encryptedKey);
+    // Creates a ReadableStream from a File object, encrypts the stream using a transformer,
+    // and returns a ReadableStreamDefaultReader for the encrypted stream.
+    const fileStream = file.stream();
+    const transformerEncrypt = getTransformerEncrypt(encryptedKey);
+    const encryptedFileStream = fileStream.pipeThrough(transformerEncrypt);
+    const reader = encryptedFileStream.getReader();
 
     let upload: Upload;
     if (opts.encrypt) upload = new Upload(reader, tusOpts);

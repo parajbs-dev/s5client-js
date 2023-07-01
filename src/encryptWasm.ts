@@ -180,62 +180,44 @@ export async function encryptFile(
 }
 
 /**
- * Creates a ReadableStreamDefaultReader from an encrypted file. This function
- * first gets a reader from the input file's stream. It then creates a new
- * readable stream where the encryption is applied to each chunk of data read
- * from the original reader. The function uses the WASM module and the
- * encryption function to encrypt the chunks. Encrypted chunks are then
- * enqueued in the new stream's controller. When the original reader is done,
- * any remaining data in the buffer is also encrypted and enqueued. Finally,
- * the function returns a reader from the new stream.
- * @param {File} file - The file to be encrypted.
- * @param {Uint8Array} key - The encryption key to be used.
- * @returns {ReadableStreamDefaultReader<Uint8Array>} A ReadableStreamDefaultReader of the encrypted file chunks.
+ * Returns a transformer function that encrypts the input data using the provided key.
+ * The transformer function takes in a stream of Uint8Array chunks and outputs a stream of encrypted Uint8Array chunks.
+ * The encryption is done using the XChaCha20-Poly1305 algorithm.
+ * The input data is split into chunks of size 262144 bytes (256 KB) and each chunk is encrypted separately.
+ * @param key The encryption key to use, as a Uint8Array.
+ * @returns A TransformStream object that takes in Uint8Array chunks and outputs encrypted Uint8Array chunks.
  */
-export function getReaderFromFileEncrypt(file: File, key: Uint8Array): ReadableStreamDefaultReader<Uint8Array> {
-  const originalReader = file.stream().getReader();
+export function getTransformerEncrypt(key: Uint8Array): TransformStream<Uint8Array, Uint8Array> {
+  let buffer = new Uint8Array(0);
+  let chunkIndex = 0;
   const chunkSize = 262144; // Chunk size in bytes
 
-  const modifiedStream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      let buffer = new Uint8Array(0);
-      let chunkIndex = 0;
+  return new TransformStream({
+    async transform(chunk, controller) {
+      const newBuffer = new Uint8Array(buffer.length + chunk.length);
+      newBuffer.set(buffer);
+      newBuffer.set(chunk, buffer.length);
+      buffer = newBuffer;
 
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await originalReader.read();
+      while (buffer.length >= chunkSize) {
+        const chunk = buffer.slice(0, chunkSize);
+        const encryptedChunkUint8Array = Promise.resolve(encrypt_file_xchacha20(chunk, key, 0x0, chunkIndex));
+        controller.enqueue(await encryptedChunkUint8Array);
 
-        // Check if done, if so process remaining buffer and break
-        if (done) {
-          if (buffer.length > 0) {
-            const encryptedChunkUint8Array = encrypt_file_xchacha20(buffer, key, 0x0, chunkIndex);
-            controller.enqueue(encryptedChunkUint8Array);
-          }
-          controller.close();
-          return;
-        }
+        buffer = buffer.slice(chunkSize);
+        chunkIndex++;
+      }
+    },
+    async flush(controller) {
+      // Process remaining data in the buffer, if any
+      while (buffer.length > 0) {
+        const chunk = buffer.slice(0, Math.min(chunkSize, buffer.length));
+        const encryptedChunkUint8Array = Promise.resolve(encrypt_file_xchacha20(chunk, key, 0x0, chunkIndex));
+        controller.enqueue(await encryptedChunkUint8Array);
 
-        // If value is not undefined, append the new data to the buffer
-        if (value) {
-          const newBuffer = new Uint8Array(buffer.length + value.length);
-          newBuffer.set(buffer);
-          newBuffer.set(value, buffer.length);
-          buffer = newBuffer;
-        }
-
-        while (buffer.length >= chunkSize) {
-          // If the buffer is large enough, encrypt and enqueue the data
-          const chunk = buffer.slice(0, chunkSize);
-          const encryptedChunkUint8Array = encrypt_file_xchacha20(chunk, key, 0x0, chunkIndex);
-          controller.enqueue(encryptedChunkUint8Array);
-
-          // Create a new buffer with any remaining data
-          buffer = buffer.slice(chunkSize);
-          chunkIndex++;
-        }
+        buffer = buffer.slice(Math.min(chunkSize, buffer.length));
+        chunkIndex++;
       }
     },
   });
-
-  return modifiedStream.getReader();
 }

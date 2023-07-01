@@ -11,6 +11,7 @@ use std::io::{Cursor, Read};
 ///
 /// @param input_file - The bytes of the file to be encrypted.
 /// @param padding - The size of the padding to be added to each chunk of the file.
+/// @param chunk_index - The index of the chunk being encrypted.
 /// @returns A Result that, if Ok, contains the encrypted file as a vector of bytes.
 #[wasm_bindgen]
 pub fn encrypt_file_xchacha20(
