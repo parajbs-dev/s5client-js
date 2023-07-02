@@ -175,7 +175,7 @@ export async function uploadSmallFile(
 
   let responsedS5Cid;
   if (customOptions?.encrypt) {
-    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithKey };
+    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithoutKey };
   } else {
     responsedS5Cid = { cid: response.data.cid };
   }
