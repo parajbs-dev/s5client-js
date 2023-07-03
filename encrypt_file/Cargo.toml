@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 description = "A Rust library for encrypting files using the XChaCha20 algorithm."
 license = "MIT"
+repository = "https://github.com/parajbs-dev/s5client-js"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
