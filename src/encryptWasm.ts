@@ -180,14 +180,37 @@ export async function encryptFile(
 }
 
 /**
+ * Returns a ReadableStreamDefaultReader for a ReadableStream of encrypted data from the provided File object.
+ * The data is encrypted using the XChaCha20-Poly1305 algorithm with the provided encryption key.
+ * The encryption is done on-the-fly using a transformer function.
+ * The input data is split into chunks of size 262144 bytes (256 KB) and each chunk is encrypted separately.
+ * @param file The File object to read from.
+ * @param encryptedKey The encryption key to use, as a Uint8Array.
+ * @returns A ReadableStreamDefaultReader for a ReadableStream of encrypted data from the provided File object.
+ */
+export function getEncryptedStreamReader(
+  file: File,
+  encryptedKey: Uint8Array
+): ReadableStreamDefaultReader<Uint8Array> {
+  // Creates a ReadableStream from a File object, encrypts the stream using a transformer,
+  // and returns a ReadableStreamDefaultReader for the encrypted stream.
+
+  const fileStream = file.stream();
+  const transformerEncrypt = getTransformerEncrypt(encryptedKey);
+  const encryptedFileStream = fileStream.pipeThrough(transformerEncrypt);
+  const reader = encryptedFileStream.getReader();
+
+  return reader;
+}
+
+/**
  * Returns a transformer function that encrypts the input data using the provided key.
- * The transformer function takes in a stream of Uint8Array chunks and outputs a stream of encrypted Uint8Array chunks.
  * The encryption is done using the XChaCha20-Poly1305 algorithm.
  * The input data is split into chunks of size 262144 bytes (256 KB) and each chunk is encrypted separately.
  * @param key The encryption key to use, as a Uint8Array.
  * @returns A TransformStream object that takes in Uint8Array chunks and outputs encrypted Uint8Array chunks.
  */
-export function getTransformerEncrypt(key: Uint8Array): TransformStream<Uint8Array, Uint8Array> {
+function getTransformerEncrypt(key: Uint8Array): TransformStream<Uint8Array, Uint8Array> {
   let buffer = new Uint8Array(0);
   let chunkIndex = 0;
   const chunkSize = 262144; // Chunk size in bytes
