@@ -7,7 +7,8 @@
     <script src="/dist/s5client.js"></script>
     <script src="/config.js"></script>
     <script>
-      const PORTAL_DOWNLOAD_URL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/s5/blob";
+      const PORTAL_DOWNLOAD_URL =
+        window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/s5/blob";
 
       const S5Client = s5client.S5Client;
 
@@ -20,16 +21,14 @@
 
       // Instantiate the S5Client
       const client = new S5Client(PORTAL_URL, customClientOptions);
-      const clientDownload = new S5Client(
-        PORTAL_DOWNLOAD_URL,
-        customClientOptions
-      );
+      const clientDownload = new S5Client(PORTAL_DOWNLOAD_URL, customClientOptions);
 
       let uploadedFileCID = null;
       let uploadedEncryptFileCID = null;
 
       async function handleFileUpload(event) {
-      let downloadButton = document.getElementById("download-button");
+        let downloadButton = document.getElementById("download-button");
+        let downloadButtonVideo = document.getElementById("downloadVideo-button");
         const file = event.target.files[0];
         if (!file) {
           console.error("No file selected");
@@ -41,10 +40,11 @@
           const customOptions = { encrypt: false };
           console.log("handleFileUpload: start");
 
-          const { cid } = await client.uploadLargeFile(file, customOptions);
+          const { cid } = await client.uploadFile(file, customOptions);
 
           if (cid != null) {
             downloadButton.disabled = false;
+            downloadButtonVideo.disabled = false;
           }
 
           // Log the CID and store it
@@ -69,8 +69,26 @@
         }
       }
 
+      async function handleVideoDownload() {
+        if (!uploadedFileCID) {
+          console.error("No file has been uploaded yet");
+          return;
+        }
+
+        try {
+          // Download the file
+          const videoUrl = PORTAL_DOWNLOAD_URL + "/" + uploadedFileCID + "?mediaType=video%2Fmp4";
+
+          window.location.assign(videoUrl);
+          // await clientDownload.downloadFile(uploadedEncryptFileCID);
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
       async function handleFileUploadEncrypt(event) {
-      let downloadButtonEncrypt = document.getElementById("encrypt-button");
+        let downloadButtonEncrypt = document.getElementById("encrypt-button");
+        let downloadButtonVideoEncrypt = document.getElementById("encryptVideo-button");
         const file = event.target.files[0];
         if (!file) {
           console.error("No file selected");
@@ -82,10 +100,14 @@
           const customOptions = { encrypt: true };
           console.log("handleFileUpload: start");
 
-          const { cid } = await client.uploadLargeFile(file, customOptions);
+          const { cid, key, cidWithoutKey } = await client.uploadFile(file, customOptions);
+
+          console.log("key:  ", key);
+          console.log("cidWithoutKey:  ", cidWithoutKey);
 
           if (cid != null) {
             downloadButtonEncrypt.disabled = false;
+            downloadButtonVideoEncrypt.disabled = false;
           }
 
           // Log the CID and store it
@@ -110,6 +132,23 @@
         }
       }
 
+      async function handleVideoDownloadEncrypt() {
+        if (!uploadedEncryptFileCID) {
+          console.error("No file has been uploaded yet");
+          return;
+        }
+
+        try {
+          // Download the file
+          const videoUrl = PORTAL_DOWNLOAD_URL + "/" + uploadedEncryptFileCID + "?mediaType=video%2Fmp4";
+
+          window.location.assign(videoUrl);
+          // await clientDownload.downloadFile(uploadedEncryptFileCID);
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const inputElement = document.getElementById("file-input");
         inputElement.addEventListener("change", handleFileUpload);
@@ -118,24 +157,33 @@
         downloadButton.disabled = true;
         downloadButton.addEventListener("click", handleFileDownload);
 
+        const downloadButtonVideo = document.getElementById("downloadVideo-button");
+        downloadButtonVideo.disabled = true;
+        downloadButtonVideo.addEventListener("click", handleVideoDownload);
+
         const inputElementEncrypt = document.getElementById("encrypt-input");
         inputElementEncrypt.addEventListener("change", handleFileUploadEncrypt);
 
         const downloadButtonEncrypt = document.getElementById("encrypt-button");
         downloadButtonEncrypt.disabled = true;
         downloadButtonEncrypt.addEventListener("click", handleFileDownloadEncrypt);
-      });
 
+        const downloadButtonVideoEncrypt = document.getElementById("encryptVideo-button");
+        downloadButtonVideoEncrypt.disabled = true;
+        downloadButtonVideoEncrypt.addEventListener("click", handleVideoDownloadEncrypt);
+      });
     </script>
   </head>
   <body>
     <h1>S5Client Example</h1>
     <input type="file" id="file-input" />
     <button id="download-button">Download</button>
-    <br>
+    <button id="downloadVideo-button">Video</button>
+    <br />
     <h1>S5Client Encrypt Example</h1>
     <input type="file" id="encrypt-input" />
     <button id="encrypt-button">Download</button>
+    <button id="encryptVideo-button">Video</button>
   </body>
 
   <script type="module">
@@ -144,10 +192,7 @@
       window.addEventListener("load", function () {
         navigator.serviceWorker.register("./sw.js").then(
           function (registration) {
-            console.log(
-              "ServiceWorker registration successful with scope: ",
-              registration.scope
-            );
+            console.log("ServiceWorker registration successful with scope: ", registration.scope);
           },
           function (err) {
             console.log("ServiceWorker registration failed: ", err);

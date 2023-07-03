@@ -18,7 +18,7 @@ import {
 import { buildRequestHeaders, buildRequestUrl } from "./request";
 
 import {
-  encodeCIDWithPrefixZ,
+  encodeCIDWithPrefixU,
   calculateB3hashFromFile,
   getFileMimeType,
   generateCIDFromMHash,
@@ -36,7 +36,7 @@ import {
   removeKeyFromEncryptedCid,
   createEncryptedCid,
   encryptFile,
-  getTransformerEncrypt,
+  getEncryptedStreamReader,
 } from "./encryptWasm";
 
 /**
@@ -175,7 +175,7 @@ export async function uploadSmallFile(
 
   let responsedS5Cid;
   if (customOptions?.encrypt) {
-    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithoutKey };
+    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithKey };
   } else {
     responsedS5Cid = { cid: response.data.cid };
   }
@@ -247,6 +247,9 @@ export async function uploadSmallFileRequest(
     });
   }
 
+  const uCid = encodeCIDWithPrefixU(cid);
+  response.data["cid"] = uCid;
+
   return response;
 }
 
@@ -309,9 +312,10 @@ export async function uploadLargeFileRequest(
 
   const b3hash = await calculateB3hashFromFile(file);
   const mhash = generateMHashFromB3hash(b3hash);
+  const cid = generateCIDFromMHash(mhash, file);
 
   let mHashBase64url: string;
-  let zCid: string;
+  let uCid: string;
   let encryptedBlobMHashBase64url: string;
   let encryptedCid: string;
   let encryptedKey: Uint8Array;
@@ -332,8 +336,6 @@ export async function uploadLargeFileRequest(
 
     const padding = 0;
 
-    const cid = generateCIDFromMHash(mhash, file);
-
     const encryptedCidBytes = createEncryptedCid(
       cidTypeEncrypted,
       encryptionAlgorithmXChaCha20Poly1305,
@@ -344,11 +346,10 @@ export async function uploadLargeFileRequest(
       cid
     );
 
-    encryptedCid = "u" + convertMHashToB64url(Buffer.from(encryptedCidBytes));
+    encryptedCid = encodeCIDWithPrefixU(Buffer.from(encryptedCidBytes));
   } else {
-    const cid = generateCIDFromMHash(mhash, file);
     mHashBase64url = convertMHashToB64url(mhash);
-    zCid = encodeCIDWithPrefixZ(cid);
+    uCid = encodeCIDWithPrefixU(cid);
   }
 
   return new Promise((resolve, reject) => {
@@ -365,7 +366,6 @@ export async function uploadLargeFileRequest(
             filename,
             filetype: file.type,
           },
-      //      fileReader: myFileReader,
       headers,
       chunkSize: opts.encrypt ? 262160 : 262144,
       uploadSize: fileEncryptSize,
@@ -389,7 +389,7 @@ export async function uploadLargeFileRequest(
         let resCid: string;
 
         if (opts.encrypt) resCid = encryptedCid;
-        else resCid = zCid;
+        else resCid = uCid;
 
         const encryptedCidWithoutKey = opts.encrypt ? removeKeyFromEncryptedCid(encryptedCid) : "";
         const encryptedKey64 = opts.encrypt ? convertMHashToB64url(Buffer.from(encryptedKey)) : "";
@@ -401,10 +401,7 @@ export async function uploadLargeFileRequest(
 
     // Creates a ReadableStream from a File object, encrypts the stream using a transformer,
     // and returns a ReadableStreamDefaultReader for the encrypted stream.
-    const fileStream = file.stream();
-    const transformerEncrypt = getTransformerEncrypt(encryptedKey);
-    const encryptedFileStream = fileStream.pipeThrough(transformerEncrypt);
-    const reader = encryptedFileStream.getReader();
+    const reader = getEncryptedStreamReader(file, encryptedKey);
 
     let upload: Upload;
     if (opts.encrypt) upload = new Upload(reader, tusOpts);
