@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 
-import * as blake3 from "blake3-wasm";
+import { blake3 } from "@noble/hashes/blake3";
 
 import {
   convertMHashToB64url,
@@ -25,11 +25,7 @@ export async function calculateB3hashFromFileEncrypt(
   file: File,
   encryptedKey: Uint8Array
 ): Promise<{ b3hash: Buffer; encryptedFileSize: number }> {
-  // Load the BLAKE3 library asynchronously
-  await blake3.load();
-
-  // Create a hash object
-  const hasher = blake3.createHash();
+  const hasher = await blake3.create({});
 
   // Define the chunk size (1 MB)
   const chunkSize = 262144; // 1024 * 1024;
@@ -60,7 +56,7 @@ export async function calculateB3hashFromFileEncrypt(
   // Obtain the final hash value
   const b3hash = hasher.digest();
   // Return the hash value as a Promise resolved to a Buffer
-  return { b3hash: b3hash, encryptedFileSize };
+  return { b3hash: Buffer.from(b3hash), encryptedFileSize };
 }
 
 /**

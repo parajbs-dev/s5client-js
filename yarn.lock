@@ -1023,7 +1023,7 @@
     "@babel/helper-validator-identifier" "^7.22.5"
     to-fast-properties "^2.0.0"
 
-"@c4312/blake3-internal@2.1.7", "@c4312/blake3-internal@3.0.0", "@c4312/blake3-internal@^3.0.0":
+"@c4312/blake3-internal@2.1.7", "@c4312/blake3-internal@3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@c4312/blake3-internal/-/blake3-internal-3.0.0.tgz#ed327913133d2e1874d6cb1af2c94dc3c1b6f9ec"
   integrity sha512-USnabcn5uQDbEEryzjK4F3L7HVbMsWtqkTjDbZ/zyMp2vXwlOVnYZbn2WEGx+RmN84U5S1dTe1+RI0fKBWxQsA==
