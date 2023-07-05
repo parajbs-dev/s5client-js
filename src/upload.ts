@@ -28,16 +28,16 @@ import {
   encryptionAlgorithmXChaCha20Poly1305,
 } from "s5-utils-js";
 
-import __wbg_init, { generate_key } from "../encrypt_file/pkg/encrypt_file";
-
 import {
+  __wbg_init,
+  generate_key,
   chunkSizeAsPowerOf2,
   calculateB3hashFromFileEncrypt,
   removeKeyFromEncryptedCid,
   createEncryptedCid,
   encryptFile,
   getEncryptedStreamReader,
-} from "./encryptWasm";
+} from "s5-encryptWasm";
 
 /**
  * Uploads a file from a URL.
@@ -175,7 +175,7 @@ export async function uploadSmallFile(
 
   let responsedS5Cid;
   if (customOptions?.encrypt) {
-    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithKey };
+    responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithoutKey };
   } else {
     responsedS5Cid = { cid: response.data.cid };
   }
@@ -229,7 +229,7 @@ export async function uploadSmallFileRequest(
     });
 
     response.data.cid = encryptedCid;
-    response.data["key"] = encryptedKey;
+    response.data["key"] = convertMHashToB64url(Buffer.from(encryptedKey));
     response.data["cidWithoutKey"] = removeKeyFromEncryptedCid(encryptedCid);
   } else {
     file = ensureFileObjectConsistency(file);
@@ -245,10 +245,10 @@ export async function uploadSmallFileRequest(
       method: "post",
       data: formData,
     });
-  }
 
-  const uCid = encodeCIDWithPrefixU(cid);
-  response.data["cid"] = uCid;
+    const uCid = encodeCIDWithPrefixU(cid);
+    response.data["cid"] = uCid;
+  }
 
   return response;
 }

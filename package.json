@@ -1,6 +1,6 @@
 {
   "name": "s5client-js",
-  "version": "0.5.0-beta15",
+  "version": "0.5.0-beta15-encryptWasm",
   "description": "S5 Javascript Client",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -76,6 +76,7 @@
     "libsodium-wrappers": "^0.7.11",
     "mime": "^3.0.0",
     "path-browserify": "1.0.1",
+    "s5-encryptWasm": "https://github.com/Fabstir/s5-encryptWasm.git#dev",
     "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_8",
     "tus-js-client": "^3.1.0",
     "url-join": "^5.0.0",
