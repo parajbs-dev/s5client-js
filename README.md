@@ -13,3 +13,7 @@ An S5 Client in Javascript for Decentralized content-addressed storage network S
 ## Documentation
 
 For S5 documentation, please see [the S5 SDK docs](https://docs.s5.ninja/).
+
+## Thanks to
+
+@JulianB (Fabstir/s5-encryptWasm) for creating encryptWasm.
