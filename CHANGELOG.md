@@ -25,3 +25,4 @@ Types of changes:
 
 ### Added
 
+## code:[0.5.0-beta15-encryptWasm] 07/06/2023

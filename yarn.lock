@@ -2680,7 +2680,7 @@ eslint-visitor-keys@^3.3.0, eslint-visitor-keys@^3.4.1:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.4.1.tgz#c22c48f48942d08ca824cc526211ae400478a994"
   integrity sha512-pZnmmLwYzf+kWaM/Qgrvpen51upAktaaiI01nsJD/Yr3lMOdNtq0cxkrrg16w64VtisN6okbs7Q8AfGqj4c9fA==
 
-eslint@^8.42.0:
+eslint@^8.43.0:
   version "8.43.0"
   resolved "https://registry.yarnpkg.com/eslint/-/eslint-8.43.0.tgz#3e8c6066a57097adfd9d390b8fc93075f257a094"
   integrity sha512-aaCpf2JqqKesMFGgmRPessmVKjcGXqdlAYLLC3THM8t5nBRZRQ+st5WM/hoJXkdioEXLLbXgclUpM0TXo5HX5Q==
@@ -4589,6 +4589,15 @@ rxjs@^7.8.0:
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
   dependencies:
     tslib "^2.1.0"
+
+"s5-encryptWasm@https://github.com/Fabstir/s5-encryptWasm.git#dev":
+  version "0.1.0-beta1"
+  resolved "https://github.com/Fabstir/s5-encryptWasm.git#dc87347226d27dbf38880ddb998b8dbb1428240d"
+  dependencies:
+    "@noble/hashes" "^1.3.1"
+    axios "^1.4.0"
+    path-browserify "1.0.1"
+    s5-utils-js "https://github.com/parajbs-dev/s5-utils-js.git#test_8"
 
 "s5-utils-js@https://github.com/parajbs-dev/s5-utils-js.git#test_8":
   version "0.1.0-beta8"

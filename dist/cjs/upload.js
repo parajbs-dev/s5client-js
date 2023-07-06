@@ -2,9 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadWebappRequest = exports.uploadWebapp = exports.uploadDirectoryRequest = exports.uploadDirectory = exports.uploadLargeFileRequest = exports.uploadLargeFile = exports.uploadSmallFileRequest = exports.uploadSmallFile = exports.uploadFile = exports.createFileFromData = exports.uploadData = exports.uploadFromUrl = void 0;
 const tus_js_client_1 = require("tus-js-client");
+const buffer_1 = require("buffer");
 const defaults_1 = require("./defaults");
 const request_1 = require("./request");
 const s5_utils_js_1 = require("s5-utils-js");
+const s5_encryptWasm_1 = require("s5-encryptWasm");
 /**
  * Uploads a file from a URL.
  * @param this - The instance of the S5Client class.
@@ -115,7 +117,13 @@ exports.uploadFile = uploadFile;
  */
 async function uploadSmallFile(file, customOptions) {
     const response = await this.uploadSmallFileRequest(file, customOptions);
-    const responsedS5Cid = { cid: response.data.cid };
+    let responsedS5Cid;
+    if (customOptions?.encrypt) {
+        responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithoutKey };
+    }
+    else {
+        responsedS5Cid = { cid: response.data.cid };
+    }
     return responsedS5Cid;
 }
 exports.uploadSmallFile = uploadSmallFile;
@@ -130,19 +138,51 @@ exports.uploadSmallFile = uploadSmallFile;
 async function uploadSmallFileRequest(file, customOptions) {
     const opts = { ...defaults_1.DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     const formData = new FormData();
-    file = ensureFileObjectConsistency(file);
-    if (opts.customFilename) {
-        formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, file, opts.customFilename);
+    const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
+    const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
+    const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
+    let response;
+    // If customOptions.encrypt is true, encrypt the file before uploading.
+    if (opts.encrypt) {
+        // Initialize the WASM module
+        await (0, s5_encryptWasm_1.__wbg_init)();
+        const encryptedKey = (0, s5_encryptWasm_1.generate_key)();
+        // eslint-disable-next-line
+        let { encryptedFile, encryptedCid } = await (0, s5_encryptWasm_1.encryptFile)(file, file.name, encryptedKey, cid);
+        encryptedFile = ensureFileObjectConsistency(encryptedFile);
+        if (opts.customFilename) {
+            formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, encryptedFile, opts.customFilename);
+        }
+        else {
+            formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, encryptedFile);
+        }
+        response = await this.executeRequest({
+            ...opts,
+            endpointPath: opts.endpointUpload,
+            method: "post",
+            data: formData,
+        });
+        response.data.cid = encryptedCid;
+        response.data["key"] = (0, s5_utils_js_1.convertMHashToB64url)(buffer_1.Buffer.from(encryptedKey));
+        response.data["cidWithoutKey"] = (0, s5_encryptWasm_1.removeKeyFromEncryptedCid)(encryptedCid);
     }
     else {
-        formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, file);
+        file = ensureFileObjectConsistency(file);
+        if (opts.customFilename) {
+            formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, file, opts.customFilename);
+        }
+        else {
+            formData.append(defaults_1.PORTAL_FILE_FIELD_NAME, file);
+        }
+        response = await this.executeRequest({
+            ...opts,
+            endpointPath: opts.endpointUpload,
+            method: "post",
+            data: formData,
+        });
+        const uCid = (0, s5_utils_js_1.encodeCIDWithPrefixU)(cid);
+        response.data["cid"] = uCid;
     }
-    const response = await this.executeRequest({
-        ...opts,
-        endpointPath: opts.endpointUpload,
-        method: "post",
-        data: formData,
-    });
     return response;
 }
 exports.uploadSmallFileRequest = uploadSmallFileRequest;
@@ -188,36 +228,39 @@ async function uploadLargeFileRequest(file, customOptions) {
             // @ts-expect-error TS complains.
             opts.onUploadProgress(progress, { loaded: bytesSent, total: bytesTotal });
         };
+    const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
+    const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
+    const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
     let mHashBase64url;
-    let zCid;
-    let encryptedUploadFile;
-    let mhashEncryptedBase64url;
-    let uCidEncrypted;
+    let uCid;
+    let encryptedBlobMHashBase64url;
+    let encryptedCid;
+    let encryptedKey;
+    let fileEncryptSize;
     if (opts.encrypt) {
-        const encryptKey = await (0, s5_utils_js_1.generateKeyXchacha20)();
-        const { encryptedFile } = await (0, s5_utils_js_1.encryptFile)(file, encryptKey);
-        encryptedUploadFile = encryptedFile;
-        const b3hashEncrypted = await (0, s5_utils_js_1.calculateB3hashFromFile)(encryptedFile);
-        const mhashEncrypted = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hashEncrypted);
-        const { encryptedCidBuffer } = await (0, s5_utils_js_1.generateEncryptedCIDFromMHash)(mhashEncrypted, file);
-        mhashEncryptedBase64url = (0, s5_utils_js_1.convertMHashToB64url)(mhashEncrypted);
-        uCidEncrypted = (0, s5_utils_js_1.encodeCIDWithPrefixU)(encryptedCidBuffer);
+        // Initialize the WASM module
+        await (0, s5_encryptWasm_1.__wbg_init)();
+        encryptedKey = (0, s5_encryptWasm_1.generate_key)();
+        const { b3hash: b3hashEncrypt, encryptedFileSize } = await (0, s5_encryptWasm_1.calculateB3hashFromFileEncrypt)(file, encryptedKey);
+        fileEncryptSize = encryptedFileSize;
+        const encryptedBlobHash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hashEncrypt);
+        encryptedBlobMHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(encryptedBlobHash);
+        const padding = 0;
+        const encryptedCidBytes = (0, s5_encryptWasm_1.createEncryptedCid)(s5_utils_js_1.cidTypeEncrypted, s5_utils_js_1.encryptionAlgorithmXChaCha20Poly1305, s5_encryptWasm_1.chunkSizeAsPowerOf2, encryptedBlobHash, encryptedKey, padding, cid);
+        encryptedCid = (0, s5_utils_js_1.encodeCIDWithPrefixU)(buffer_1.Buffer.from(encryptedCidBytes));
     }
     else {
-        const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
-        const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
-        const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
         mHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(mhash);
-        zCid = (0, s5_utils_js_1.encodeCIDWithPrefixZ)(cid);
+        uCid = (0, s5_utils_js_1.encodeCIDWithPrefixU)(cid);
     }
     return new Promise((resolve, reject) => {
         const tusOpts = {
             endpoint: url,
             metadata: opts.encrypt
                 ? {
-                    hash: mhashEncryptedBase64url,
+                    hash: encryptedBlobMHashBase64url,
                     filename,
-                    filetype: file.type,
+                    filetype: `application/octet-stream`,
                 }
                 : {
                     hash: mHashBase64url,
@@ -225,6 +268,8 @@ async function uploadLargeFileRequest(file, customOptions) {
                     filetype: file.type,
                 },
             headers,
+            chunkSize: opts.encrypt ? 262160 : 262144,
+            uploadSize: fileEncryptSize,
             onProgress,
             onBeforeRequest: function (req) {
                 const xhr = req.getUnderlyingObject();
@@ -243,16 +288,21 @@ async function uploadLargeFileRequest(file, customOptions) {
                 }
                 let resCid;
                 if (opts.encrypt)
-                    resCid = uCidEncrypted;
+                    resCid = encryptedCid;
                 else
-                    resCid = zCid;
-                const resolveData = { data: { cid: resCid } };
+                    resCid = uCid;
+                const encryptedCidWithoutKey = opts.encrypt ? (0, s5_encryptWasm_1.removeKeyFromEncryptedCid)(encryptedCid) : "";
+                const encryptedKey64 = opts.encrypt ? (0, s5_utils_js_1.convertMHashToB64url)(buffer_1.Buffer.from(encryptedKey)) : "";
+                const resolveData = { data: { cid: resCid, key: encryptedKey64, cidWithoutKey: encryptedCidWithoutKey } };
                 resolve(resolveData);
             },
         };
+        // Creates a ReadableStream from a File object, encrypts the stream using a transformer,
+        // and returns a ReadableStreamDefaultReader for the encrypted stream.
+        const reader = (0, s5_encryptWasm_1.getEncryptedStreamReader)(file, encryptedKey);
         let upload;
         if (opts.encrypt)
-            upload = new tus_js_client_1.Upload(encryptedUploadFile, tusOpts);
+            upload = new tus_js_client_1.Upload(reader, tusOpts);
         else
             upload = new tus_js_client_1.Upload(file, tusOpts);
         upload.start();

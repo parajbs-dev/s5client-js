@@ -1,6 +1,6 @@
 {
   "name": "s5client-js",
-  "version": "0.5.0-beta15",
+  "version": "0.5.0-beta15-encryptWasm",
   "description": "S5 Javascript Client",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -36,7 +36,8 @@
     "start": "yarn webpack-example && webpack serve --config webpack.dev.js",
     "webpack-assets-local": "npx webpack --config ./webpack.assets.config.js --env copysw=true",
     "webpack-local": "npx webpack --config ./webpack.example.config.js && yarn webpack-assets-local",
-    "local": "yarn webpack-local && webpack serve --config webpack.dev.js"
+    "local": "yarn webpack-local && webpack serve --config webpack.dev.js",
+    "wasm-pack": "cd encrypt_file && wasm-pack build --target web"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -75,6 +76,7 @@
     "libsodium-wrappers": "^0.7.11",
     "mime": "^3.0.0",
     "path-browserify": "1.0.1",
+    "s5-encryptWasm": "https://github.com/Fabstir/s5-encryptWasm.git#dev",
     "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_8",
     "tus-js-client": "^3.1.0",
     "url-join": "^5.0.0",
@@ -103,12 +105,12 @@
     "babel-loader": "^9.1.2",
     "copy-webpack-plugin": "^11.0.0",
     "crypto-browserify": "3.12.0",
-    "eslint": "^8.42.0",
+    "eslint": "^8.43.0",
     "eslint-plugin-jsdoc": "46.2.6",
     "lint-staged": "^13.2.2",
     "prettier": "^2.8.8",
-    "rimraf": "^5.0.1",
     "remove-files-webpack-plugin": "^1.5.0",
+    "rimraf": "^5.0.1",
     "stream-browserify": "3.0.0",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",

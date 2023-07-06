@@ -223,6 +223,8 @@ export const DEFAULT_DIRECTORY_NAME = "dist";
  */
 export type UploadRequestResponse = {
   cid: string;
+  key?: string;
+  cidWithoutKey?: string;
 };
 
 /**
