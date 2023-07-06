@@ -17,3 +17,5 @@ For S5 documentation, please see [the S5 SDK docs](https://docs.s5.ninja/).
 ## Thanks to
 
 @JulianB (Fabstir/s5-encryptWasm) for creating encryptWasm.
+
+https://github.com/Fabstir/s5-encryptWasm
