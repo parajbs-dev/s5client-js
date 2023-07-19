@@ -213,6 +213,12 @@ exports.uploadLargeFile = uploadLargeFile;
  */
 async function uploadLargeFileRequest(file, customOptions) {
     const opts = { ...defaults_1.DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
+    let mHashBase64url;
+    let uCid;
+    let encryptedBlobMHashBase64url;
+    let encryptedCid;
+    let encryptedKey;
+    let fileEncryptSize;
     // Validation.
     const urlReq = await (0, request_1.buildRequestUrl)(this, { endpointPath: opts.endpointLargeUpload });
     const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ""}`;
@@ -231,12 +237,6 @@ async function uploadLargeFileRequest(file, customOptions) {
     const b3hash = await (0, s5_utils_js_1.calculateB3hashFromFile)(file);
     const mhash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hash);
     const cid = (0, s5_utils_js_1.generateCIDFromMHash)(mhash, file);
-    let mHashBase64url;
-    let uCid;
-    let encryptedBlobMHashBase64url;
-    let encryptedCid;
-    let encryptedKey;
-    let fileEncryptSize;
     if (opts.encrypt) {
         // Initialize the WASM module
         await (0, s5_encryptWasm_1.__wbg_init)();
@@ -244,9 +244,9 @@ async function uploadLargeFileRequest(file, customOptions) {
         const { b3hash: b3hashEncrypt, encryptedFileSize } = await (0, s5_encryptWasm_1.calculateB3hashFromFileEncrypt)(file, encryptedKey);
         fileEncryptSize = encryptedFileSize;
         const encryptedBlobHash = (0, s5_utils_js_1.generateMHashFromB3hash)(b3hashEncrypt);
-        encryptedBlobMHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(encryptedBlobHash);
         const padding = 0;
         const encryptedCidBytes = (0, s5_encryptWasm_1.createEncryptedCid)(s5_utils_js_1.cidTypeEncrypted, s5_utils_js_1.encryptionAlgorithmXChaCha20Poly1305, s5_encryptWasm_1.chunkSizeAsPowerOf2, encryptedBlobHash, encryptedKey, padding, cid);
+        encryptedBlobMHashBase64url = (0, s5_utils_js_1.convertMHashToB64url)(encryptedBlobHash);
         encryptedCid = (0, s5_utils_js_1.encodeCIDWithPrefixU)(buffer_1.Buffer.from(encryptedCidBytes));
     }
     else {

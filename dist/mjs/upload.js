@@ -203,6 +203,12 @@ export async function uploadLargeFile(file, customOptions) {
  */
 export async function uploadLargeFileRequest(file, customOptions) {
     const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
+    let mHashBase64url;
+    let uCid;
+    let encryptedBlobMHashBase64url;
+    let encryptedCid;
+    let encryptedKey;
+    let fileEncryptSize;
     // Validation.
     const urlReq = await buildRequestUrl(this, { endpointPath: opts.endpointLargeUpload });
     const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ""}`;
@@ -221,12 +227,6 @@ export async function uploadLargeFileRequest(file, customOptions) {
     const b3hash = await calculateB3hashFromFile(file);
     const mhash = generateMHashFromB3hash(b3hash);
     const cid = generateCIDFromMHash(mhash, file);
-    let mHashBase64url;
-    let uCid;
-    let encryptedBlobMHashBase64url;
-    let encryptedCid;
-    let encryptedKey;
-    let fileEncryptSize;
     if (opts.encrypt) {
         // Initialize the WASM module
         await __wbg_init();
@@ -234,9 +234,9 @@ export async function uploadLargeFileRequest(file, customOptions) {
         const { b3hash: b3hashEncrypt, encryptedFileSize } = await calculateB3hashFromFileEncrypt(file, encryptedKey);
         fileEncryptSize = encryptedFileSize;
         const encryptedBlobHash = generateMHashFromB3hash(b3hashEncrypt);
-        encryptedBlobMHashBase64url = convertMHashToB64url(encryptedBlobHash);
         const padding = 0;
         const encryptedCidBytes = createEncryptedCid(cidTypeEncrypted, encryptionAlgorithmXChaCha20Poly1305, chunkSizeAsPowerOf2, encryptedBlobHash, encryptedKey, padding, cid);
+        encryptedBlobMHashBase64url = convertMHashToB64url(encryptedBlobHash);
         encryptedCid = encodeCIDWithPrefixU(Buffer.from(encryptedCidBytes));
     }
     else {
