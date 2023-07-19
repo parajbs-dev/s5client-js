@@ -222,8 +222,8 @@ async function getStreamingLocation(hash, types) {
 //  const res = await fetch('https://s5.cx/api/locations/' + hash + '?types=' + types);
 
 
-  console.debug('fetch', 'http://localhost:5522/s5/debug/storage_locations/' + hash + '?types=' + types)
-  const res = await fetch('http://localhost:5522/s5/debug/storage_locations/' + hash + '?types=' + types);
+  console.debug('fetch', 'http://localhost:5050/s5/debug/storage_locations/' + hash + '?types=' + types)
+  const res = await fetch('http://localhost:5050/s5/debug/storage_locations/' + hash + '?types=' + types);
 
 
   const parts = (await res.json())['locations'][0]['parts'];
