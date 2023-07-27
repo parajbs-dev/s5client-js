@@ -4627,7 +4627,7 @@ rxjs@^7.8.0:
 
 "s5-encryptWasm@https://github.com/Fabstir/s5-encryptWasm.git#dev_2":
   version "0.1.0-beta1"
-  resolved "https://github.com/Fabstir/s5-encryptWasm.git#7595ca29b9d5448c7d5718e495378535cb645f27"
+  resolved "https://github.com/Fabstir/s5-encryptWasm.git#3df1598c9f50e6d6672ed733cecb8bebf73e9bf0"
   dependencies:
     "@noble/hashes" "^1.3.1"
     axios "^1.4.0"
