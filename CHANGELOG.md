@@ -15,6 +15,8 @@ Types of changes:
 
 ## Unreleased
 
+## [0.5.0-beta15-encryptWasm] 07/06/2023
+
 ## [0.5.0-beta15] 19.06.2023
 
 ## [0.5.0-beta14] 07.06.2023
@@ -25,4 +27,4 @@ Types of changes:
 
 ### Added
 
-## code:[0.5.0-beta15-encryptWasm] 07/06/2023
+
