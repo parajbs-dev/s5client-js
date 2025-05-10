@@ -41,6 +41,7 @@ export type CustomClientOptions = {
  */
 export type RequestConfig = CustomClientOptions & {
     endpointPath?: string;
+    endpointGetMetadata?: string;
     data?: FormData | Record<string, unknown>;
     url?: string;
     method?: Method;

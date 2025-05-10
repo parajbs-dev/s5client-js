@@ -1,6 +1,6 @@
 {
   "name": "s5client-js",
-  "version": "0.5.0-beta10",
+  "version": "0.6.0-beta01",
   "description": "S5 Javascript Client",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -66,7 +66,9 @@
     "mime": "^3.0.0",
     "path-browserify": "^1.0.1",
     "url-join": "^4.0.1",
-    "url-parse": "^1.5.1"
+    "url-parse": "^1.5.1",
+    "s5-utils-js": "https://github.com/parajbs-dev/s5-utils-js.git#test_8_3",
+    "s5-encryptWasm": "https://github.com/parajbs-dev/s5-encryptWasm#dev"    
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
@@ -95,7 +97,7 @@
     "axios-mock-adapter": "^1.18.2",
     "axios-retry": "^3.2.5",
     "eslint": "^8.17.0",
-    "eslint-plugin-jsdoc": "^39.2.8",
+    "eslint-plugin-jsdoc": "50.6.9",
     "jest": "^29.1.2",
     "jest-environment-jsdom": "^29.0.2",
     "lint-staged": "^13.0.0",

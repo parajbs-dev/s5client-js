@@ -109,11 +109,13 @@ class S5Client {
         const urlReq = await (0, request_1.buildRequestUrl)(this, {
             baseUrl: config.url,
             endpointPath: config.endpointPath,
+            endpointGetMetadata: config.endpointGetMetadata,
             subdomain: config.subdomain,
             extraPath: config.extraPath,
             query: config.query,
         });
-        const url = `${urlReq}${config.authToken ? `?auth_token=${config.authToken}` : ''}`;
+        const separator = config.query ? "&" : "?";
+        const url = `${urlReq}${config.authToken ? `${separator}auth_token=${config.authToken}` : ""}`;
         // Build headers.
         const headers = (0, request_1.buildRequestHeaders)(config.headers, config.customUserAgent, config.customCookie, config.s5ApiKey);
         const auth = config.APIKey ? { username: "", password: config.APIKey } : undefined;

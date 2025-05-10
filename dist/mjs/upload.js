@@ -5,6 +5,10 @@ import { getFileMimeType } from "./utils/file";
 import { DEFAULT_BASE_OPTIONS } from "./utils/options";
 import { buildRequestHeaders, buildRequestUrl } from "./request";
 import { mhashBlake3Default, cidTypeRaw } from "./constants";
+import { encodeCIDWithPrefixU, calculateB3hashFromFile, 
+// getFileMimeType,
+generateCIDFromMHash, generateMHashFromB3hash, convertMHashToB64url, } from "s5-utils-js";
+import { __wbg_init, generate_key, removeKeyFromEncryptedCid, encryptFile } from "s5-encryptWasm";
 /**
  * The tus chunk size is (4MiB - encryptionOverhead) * dataPieces, set as default.
  */
@@ -53,44 +57,91 @@ export async function uploadFile(file, customOptions) {
 }
 /**
  * Uploads a small file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointUpload="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointUpload] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
 export async function uploadSmallFile(file, customOptions) {
     const response = await this.uploadSmallFileRequest(file, customOptions);
-    const responsedS5Cid = { cid: response.data.cid };
+    let responsedS5Cid;
+    if (customOptions === null || customOptions === void 0 ? void 0 : customOptions.encrypt) {
+        responsedS5Cid = { cid: response.data.cid, key: response.data.key, cidWithoutKey: response.data.cidWithoutKey };
+    }
+    else {
+        responsedS5Cid = { cid: response.data.cid };
+    }
     return responsedS5Cid;
 }
 /**
- * Makes a request to upload a small file to S5-net.
- *
+ * Makes a request to upload a small file to S5-net with proper encoding support.
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  */
 export async function uploadSmallFileRequest(file, customOptions) {
     const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     const formData = new FormData();
-    file = ensureFileObjectConsistency(file);
-    if (opts.customFilename) {
-        formData.append(PORTAL_FILE_FIELD_NAME, file, opts.customFilename);
+    const b3hash = await calculateB3hashFromFile(file);
+    const mhash = generateMHashFromB3hash(b3hash);
+    const cid = generateCIDFromMHash(mhash, file);
+    let response;
+    // If customOptions.encrypt is true, encrypt the file before uploading.
+    if (opts.encrypt) {
+        // Initialize the WASM module
+        await __wbg_init();
+        const encryptedKey = generate_key();
+        // eslint-disable-next-line
+        let { encryptedFile, encryptedCid } = await encryptFile(file, file.name, encryptedKey, cid);
+        encryptedFile = ensureFileObjectConsistency(encryptedFile);
+        if (opts.customFilename) {
+            formData.append(PORTAL_FILE_FIELD_NAME, encryptedFile, opts.customFilename);
+        }
+        else {
+            formData.append(PORTAL_FILE_FIELD_NAME, encryptedFile);
+        }
+        response = await this.executeRequest({
+            ...opts,
+            endpointPath: opts.endpointUpload,
+            method: "post",
+            data: formData,
+        });
+        response.data.cid = encryptedCid;
+        response.data["key"] = convertMHashToB64url(Buffer.from(encryptedKey));
+        response.data["cidWithoutKey"] = removeKeyFromEncryptedCid(encryptedCid);
     }
     else {
-        formData.append(PORTAL_FILE_FIELD_NAME, file);
+        // Fix for text files with foreign characters - convert to Blob with UTF-8 encoding
+        let fileToUpload;
+        // Check if it's a text file
+        if (file.type.includes("text") || getFileMimeType(file).includes("text")) {
+            // Read file as text and create a new Blob with explicit UTF-8 encoding
+            const text = await file.text(); // Read file as text
+            const blob = new Blob([text], { type: `${file.type}; charset=utf-8` });
+            fileToUpload = new File([blob], file.name, { type: `${file.type}; charset=utf-8` });
+        }
+        else {
+            fileToUpload = ensureFileObjectConsistency(file);
+        }
+        if (opts.customFilename) {
+            formData.append(PORTAL_FILE_FIELD_NAME, fileToUpload, opts.customFilename);
+        }
+        else {
+            formData.append(PORTAL_FILE_FIELD_NAME, fileToUpload);
+        }
+        response = await this.executeRequest({
+            ...opts,
+            endpointPath: opts.endpointUpload,
+            method: "post",
+            data: formData,
+        });
+        const uCid = encodeCIDWithPrefixU(cid);
+        response.data["cid"] = uCid;
     }
-    const response = await this.executeRequest({
-        ...opts,
-        endpointPath: opts.endpointUpload,
-        method: "post",
-        data: formData,
-    });
     return response;
 }
 /* istanbul ignore next */
@@ -123,7 +174,7 @@ export async function uploadLargeFileRequest(file, customOptions) {
     const opts = { ...DEFAULT_UPLOAD_OPTIONS, ...this.customOptions, ...customOptions };
     // Validation.
     const urlReq = await buildRequestUrl(this, { endpointPath: opts.endpointLargeUpload });
-    const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ''}`;
+    const url = `${urlReq}${opts.authToken ? `?auth_token=${opts.authToken}` : ""}`;
     const headers = buildRequestHeaders(undefined, opts.customUserAgent, opts.customCookie, opts.s5ApiKey);
     file = ensureFileObjectConsistency(file);
     let filename = file.name;

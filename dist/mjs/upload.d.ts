@@ -19,6 +19,7 @@ export declare const TUS_CHUNK_SIZE: number;
  * @property [tryFiles] - Allows us to set a list of potential subfiles to return in case the requested one does not exist or is a directory. Those subfiles might be listed with relative or absolute paths. If the path is absolute the file must exist.
  */
 export type CustomUploadOptions = BaseCustomOptions & {
+    encrypt?: boolean;
     endpointUpload?: string;
     endpointDirectoryUpload: string;
     endpointLargeUpload?: string;
@@ -35,6 +36,8 @@ export type CustomUploadOptions = BaseCustomOptions & {
  */
 export type UploadRequestResponse = {
     cid: string;
+    key?: string;
+    cidWithoutKey?: string;
 };
 /**
  * The response to an upload request.
@@ -81,22 +84,20 @@ export declare const DEFAULT_UPLOAD_OPTIONS: {
 export declare function uploadFile(this: S5Client, file: File, customOptions?: CustomUploadOptions): Promise<UploadRequestResponse>;
 /**
  * Uploads a small file to S5-net.
- *
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointUpload="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointUpload] - The relative URL path of the portal endpoint to contact.
  * @returns - The returned cid.
  * @throws - Will throw if the request is successful but the upload response does not contain a complete response.
  */
 export declare function uploadSmallFile(this: S5Client, file: File, customOptions: CustomUploadOptions): Promise<UploadRequestResponse>;
 /**
- * Makes a request to upload a small file to S5-net.
- *
+ * Makes a request to upload a small file to S5-net with proper encoding support.
  * @param this - S5Client
  * @param file - The file to upload.
  * @param [customOptions] - Additional settings that can optionally be set.
- * @param [customOptions.endpointPath="/s5/upload"] - The relative URL path of the portal endpoint to contact.
+ * @param [customOptions.endpointPath] - The relative URL path of the portal endpoint to contact.
  * @returns - The upload response.
  */
 export declare function uploadSmallFileRequest(this: S5Client, file: File, customOptions?: CustomUploadOptions): Promise<AxiosResponse>;

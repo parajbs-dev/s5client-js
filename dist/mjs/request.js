@@ -49,6 +49,9 @@ export async function buildRequestUrl(client, parts) {
     if (parts.endpointPath) {
         url = makeUrl(url, parts.endpointPath);
     }
+    if (parts.endpointGetMetadata) {
+        url = makeUrl(url, parts.endpointGetMetadata);
+    }
     if (parts.extraPath) {
         url = makeUrl(url, parts.extraPath);
     }

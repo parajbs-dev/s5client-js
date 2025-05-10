@@ -29,6 +29,7 @@ export declare function buildRequestHeaders(baseHeaders?: Headers, customUserAge
 export declare function buildRequestUrl(client: S5Client, parts: {
     baseUrl?: string;
     endpointPath?: string;
+    endpointGetMetadata?: string;
     subdomain?: string;
     extraPath?: string;
     query?: {
