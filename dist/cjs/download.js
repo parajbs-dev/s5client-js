@@ -58,7 +58,7 @@ async function downloadFile(cid, customOptions) {
     const opts = { ...defaults_1.DEFAULT_DOWNLOAD_OPTIONS, ...this.customOptions, ...customOptions, download: true };
     const url = await this.getCidUrl(cid, opts);
     // Download the url.
-    window.location.assign(url);
+    window.location.assign(url + (opts.authToken ? `?auth_token=${opts.authToken}` : ""));
     return url;
 }
 exports.downloadFile = downloadFile;

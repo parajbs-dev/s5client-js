@@ -159,12 +159,23 @@ export async function uploadSmallFileRequest(file, customOptions) {
         response.data["cidWithoutKey"] = removeKeyFromEncryptedCid(encryptedCid);
     }
     else {
-        file = ensureFileObjectConsistency(file);
-        if (opts.customFilename) {
-            formData.append(PORTAL_FILE_FIELD_NAME, file, opts.customFilename);
+        // Fix for text files with foreign characters - convert to Blob with UTF-8 encoding
+        let fileToUpload;
+        // Check if it's a text file
+        if (file.type.includes("text") || getFileMimeType(file).includes("text")) {
+            // Read file as text and create a new Blob with explicit UTF-8 encoding
+            const text = await file.text(); // Read file as text
+            const blob = new Blob([text], { type: `${file.type}; charset=utf-8` });
+            fileToUpload = new File([blob], file.name, { type: `${file.type}; charset=utf-8` });
         }
         else {
-            formData.append(PORTAL_FILE_FIELD_NAME, file);
+            fileToUpload = ensureFileObjectConsistency(file);
+        }
+        if (opts.customFilename) {
+            formData.append(PORTAL_FILE_FIELD_NAME, fileToUpload, opts.customFilename);
+        }
+        else {
+            formData.append(PORTAL_FILE_FIELD_NAME, fileToUpload);
         }
         response = await this.executeRequest({
             ...opts,

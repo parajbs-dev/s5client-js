@@ -28,5 +28,6 @@ module.exports = {
     library: {
       name: 's5client',
       type: 'umd',
-  },
-};
+    },
+  }
+}
